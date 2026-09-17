@@ -6,10 +6,11 @@ from clientes import clientes
 from canchas import canchas
 
 
-def ventana_consultas():
-    ventana = tk.Toplevel()
-    ventana.title("Consultas")
-    ventana.geometry("1100x650")
+def ventana_consultas(parent=None):
+    ventana = parent or tk.Toplevel()
+    if parent is None:
+        ventana.title("Consultas")
+        ventana.geometry("1280x720")
 
     titulo = tk.Label(
         ventana,
@@ -216,11 +217,5 @@ def ventana_consultas():
         text="Limpiar",
         command=limpiar_resultados
     ).grid(row=0, column=1, padx=5)
-
-    tk.Button(
-        botones,
-        text="Cerrar",
-        command=ventana.destroy
-    ).grid(row=0, column=2, padx=5)
 
     cargar_filtros()

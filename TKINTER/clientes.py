@@ -5,10 +5,11 @@ from tkinter import ttk, messagebox
 clientes = []
 
 
-def ventana_clientes():
-    ventana = tk.Toplevel()
-    ventana.title("Gestión de Clientes")
-    ventana.geometry("800x600")
+def ventana_clientes(parent=None):
+    ventana = parent or tk.Toplevel()
+    if parent is None:
+        ventana.title("Gestión de Clientes")
+        ventana.geometry("1280x720")
 
     titulo = tk.Label(
         ventana,
@@ -150,11 +151,5 @@ def ventana_clientes():
         text="Buscar",
         command=buscar
     ).grid(row=0, column=2, padx=5)
-
-    tk.Button(
-        botones,
-        text="Cerrar",
-        command=ventana.destroy
-    ).grid(row=0, column=3, padx=5)
 
     actualizar_tabla()

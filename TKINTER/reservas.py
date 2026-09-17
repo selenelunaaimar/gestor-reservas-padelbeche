@@ -5,10 +5,11 @@ from tkinter import ttk, messagebox
 reservas = []
 
 
-def ventana_reservas():
-    ventana = tk.Toplevel()
-    ventana.title("Gestión de Reservas")
-    ventana.geometry("950x650")
+def ventana_reservas(parent=None):
+    ventana = parent or tk.Toplevel()
+    if parent is None:
+        ventana.title("Gestión de Reservas")
+        ventana.geometry("1280x720")
 
     titulo = tk.Label(
         ventana,
@@ -302,11 +303,5 @@ def ventana_reservas():
         text="Buscar",
         command=buscar
     ).grid(row=0, column=2, padx=5)
-
-    tk.Button(
-        botones,
-        text="Cerrar",
-        command=ventana.destroy
-    ).grid(row=0, column=3, padx=5)
 
     actualizar_tabla()
