@@ -5,10 +5,11 @@ from tkinter import ttk, messagebox
 canchas = []
 
 
-def ventana_canchas():
-    ventana = tk.Toplevel()
-    ventana.title("Gestión de Canchas")
-    ventana.geometry("900x600")
+def ventana_canchas(parent=None):
+    ventana = parent or tk.Toplevel()
+    if parent is None:
+        ventana.title("Gestión de Canchas")
+        ventana.geometry("1280x720")
 
     titulo = tk.Label(
         ventana,
@@ -205,12 +206,6 @@ def ventana_canchas():
         text="Buscar",
         command=buscar
     ).grid(row=0, column=2, padx=5)
-
-    tk.Button(
-        botones,
-        text="Cerrar",
-        command=ventana.destroy
-    ).grid(row=0, column=3, padx=5)
 
     limpiar()
     actualizar_tabla()
