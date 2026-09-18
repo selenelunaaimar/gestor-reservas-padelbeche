@@ -19,35 +19,45 @@ def ventana_consultas(parent=None):
     )
     titulo.pack(pady=20)
 
+    # Contenedor superior
+    contenedor_superior = tk.LabelFrame(ventana)
+    contenedor_superior.pack(anchor="w", padx=20, pady=10)
+
     # Filtros
-    filtros = tk.LabelFrame(
-        ventana,
-        text="Filtros de búsqueda",
+    filtros = tk.Frame(
+        contenedor_superior,
         padx=10,
         pady=10
     )
-    filtros.pack(fill="x", padx=20, pady=10)
+    filtros.pack(side="left", padx=(0, 20))
+
+    # Título
+    tk.Label(
+        filtros,
+        text="Filtros de búsqueda",
+        font=("Arial", 11, "bold")
+    ).grid(row=0, column=0, columnspan=4, sticky="w", padx=5, pady=(0, 5))
 
     tk.Label(filtros, text="Desde:").grid(
-        row=0, column=0, padx=5, pady=5
+        row=1, column=0, padx=5, pady=5, sticky="w"
     )
 
     entrada_desde = tk.Entry(filtros, width=15)
     entrada_desde.grid(
-        row=0, column=1, padx=5, pady=5
+        row=1, column=1, padx=5, pady=5
     )
 
     tk.Label(filtros, text="Hasta:").grid(
-        row=0, column=2, padx=5, pady=5
+        row=1, column=2, padx=5, pady=5, sticky="w"
     )
 
     entrada_hasta = tk.Entry(filtros, width=15)
     entrada_hasta.grid(
-        row=0, column=3, padx=5, pady=5
+        row=1, column=3, padx=5, pady=5
     )
 
     tk.Label(filtros, text="Cliente:").grid(
-        row=1, column=0, padx=5, pady=5
+        row=2, column=0, padx=5, pady=5, sticky="w"
     )
 
     entrada_cliente = ttk.Combobox(
@@ -56,11 +66,11 @@ def ventana_consultas(parent=None):
         width=20
     )
     entrada_cliente.grid(
-        row=1, column=1, padx=5, pady=5
+        row=2, column=1, padx=5, pady=5
     )
 
     tk.Label(filtros, text="Cancha:").grid(
-        row=1, column=2, padx=5, pady=5
+        row=2, column=2, padx=5, pady=5, sticky="w"
     )
 
     entrada_cancha = ttk.Combobox(
@@ -69,55 +79,10 @@ def ventana_consultas(parent=None):
         width=20
     )
     entrada_cancha.grid(
-        row=1, column=3, padx=5, pady=5
+        row=2, column=3, padx=5, pady=5
     )
 
-    # Titulo dentro de formulario
-    tk.Label(
-        ventana, text="RESULTADOS", font=("Arial", 14, "bold")
-    ).pack(anchor="w", padx=20, pady=(10, 0))
-
-    # Tabla de resultados
-    tabla = ttk.Treeview(
-        ventana,
-        columns=(
-            "Fecha",
-            "Cliente",
-            "DNI",
-            "Cancha",
-            "Tipo",
-            "Inicio",
-            "Fin",
-            "Estado"
-        ),
-        show="headings"
-    )
-
-    tabla.heading("Fecha", text="Fecha")
-    tabla.heading("Cliente", text="Cliente")
-    tabla.heading("DNI", text="DNI")
-    tabla.heading("Cancha", text="Cancha")
-    tabla.heading("Tipo", text="Tipo")
-    tabla.heading("Inicio", text="Hora Inicio")
-    tabla.heading("Fin", text="Hora Fin")
-    tabla.heading("Estado", text="Estado")
-
-    tabla.column("Fecha", width=100)
-    tabla.column("Cliente", width=150)
-    tabla.column("DNI", width=100)
-    tabla.column("Cancha", width=80)
-    tabla.column("Tipo", width=80)
-    tabla.column("Inicio", width=100)
-    tabla.column("Fin", width=100)
-    tabla.column("Estado", width=100)
-
-    tabla.pack(
-        fill="both",
-        expand=True,
-        padx=20,
-        pady=20
-    )
-
+    # Funciones internas
     def cargar_filtros():
         nombres_clientes = ["Todos"]
 
@@ -208,19 +173,69 @@ def ventana_consultas(parent=None):
                 "No se encontraron reservas."
             )
 
-    botones = tk.Frame(ventana)
-    botones.pack(pady=10)
+    # Bloque de botones
+    botones = tk.Frame(contenedor_superior)
+    botones.pack(side="left", anchor="center", padx=10)
 
     tk.Button(
         botones,
         text="Buscar",
-        command=buscar
-    ).grid(row=0, column=0, padx=5)
+        command=buscar,
+        width=12
+    ).pack(pady=5)
 
     tk.Button(
         botones,
         text="Limpiar",
-        command=limpiar_resultados
-    ).grid(row=0, column=1, padx=5)
+        command=limpiar_resultados,
+        width=12
+    ).pack(pady=5)
+
+
+    # Titulo en formulario
+    tk.Label(
+        ventana, text="RESULTADOS", font=("Arial", 14, "bold")
+    ).pack(anchor="w", padx=20, pady=(10, 0))
+
+    # Tabla de resultados
+    tabla = ttk.Treeview(
+        ventana,
+        columns=(
+            "Fecha",
+            "Cliente",
+            "DNI",
+            "Cancha",
+            "Tipo",
+            "Inicio",
+            "Fin",
+            "Estado"
+        ),
+        show="headings"
+    )
+
+    tabla.heading("Fecha", text="Fecha")
+    tabla.heading("Cliente", text="Cliente")
+    tabla.heading("DNI", text="DNI")
+    tabla.heading("Cancha", text="Cancha")
+    tabla.heading("Tipo", text="Tipo")
+    tabla.heading("Inicio", text="Hora Inicio")
+    tabla.heading("Fin", text="Hora Fin")
+    tabla.heading("Estado", text="Estado")
+
+    tabla.column("Fecha", width=100)
+    tabla.column("Cliente", width=150)
+    tabla.column("DNI", width=100)
+    tabla.column("Cancha", width=80)
+    tabla.column("Tipo", width=80)
+    tabla.column("Inicio", width=100)
+    tabla.column("Fin", width=100)
+    tabla.column("Estado", width=100)
+
+    tabla.pack(
+        fill="both",
+        expand=True,
+        padx=20,
+        pady=20
+    )
 
     cargar_filtros()

@@ -18,47 +18,38 @@ def ventana_clientes(parent=None):
     )
     titulo.pack(pady=20)
 
-    # Datos del cliente
-    formulario = tk.LabelFrame(ventana)
-    formulario.pack(fill="x",padx=20, pady=10)
+    # Contenedor superior (contiene formulario y botones)
+    contenedor_superior = tk.LabelFrame(ventana)
+    contenedor_superior.pack(anchor="w", padx=20, pady=10)
 
-    # Titulo dentro de formulario
+    # Formulario
+    formulario = tk.Frame(contenedor_superior)
+    formulario.pack(side="left", padx=(0, 20))
+
+    # Título dentro de formulario
     tk.Label(
         formulario,
         text="👤 CLIENTES",
         font=("Arial", 12, "bold")
-    ).grid(row=0, column=0, columnspan=4, sticky="w", padx=10, pady=(10, 10))
+    ).grid(row=0, column=0, columnspan=4, sticky="w", padx=10, pady=(0, 10))
 
-    tk.Label(formulario, text="DNI:").grid(row=1, column=0, padx=10, pady=5)
+    tk.Label(formulario, text="DNI:").grid(row=1, column=0, padx=10, pady=5, sticky="w")
     entrada_dni = tk.Entry(formulario)
     entrada_dni.grid(row=1, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Nombre y apellido:").grid(row=2, column=0, padx=10, pady=5)
+    tk.Label(formulario, text="Nombre y apellido:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
     entrada_nombre = tk.Entry(formulario)
     entrada_nombre.grid(row=2, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Teléfono:").grid(row=1, column=2, padx=10, pady=5)
+    tk.Label(formulario, text="Teléfono:").grid(row=1, column=2, padx=10, pady=5, sticky="w")
     entrada_telefono = tk.Entry(formulario)
     entrada_telefono.grid(row=1, column=3, padx=10, pady=5)
 
-    tk.Label(formulario, text="Email:").grid(row=2, column=2, padx=10, pady=5)
+    tk.Label(formulario, text="Email:").grid(row=2, column=2, padx=10, pady=5, sticky="w")
     entrada_email = tk.Entry(formulario)
     entrada_email.grid(row=2, column=3, padx=10, pady=5)
 
-    # Tabla
-    tabla = ttk.Treeview(
-        ventana,
-        columns=("DNI", "Nombre", "Telefono", "Email"),
-        show="headings"
-    )
-
-    tabla.heading("DNI", text="DNI")
-    tabla.heading("Nombre", text="Nombre y apellido")
-    tabla.heading("Telefono", text="Teléfono")
-    tabla.heading("Email", text="Email")
-
-    tabla.pack(fill="both", expand=True, padx=20, pady=20)
-
+    # Funciones internas
     def limpiar():
         entrada_dni.delete(0, tk.END)
         entrada_nombre.delete(0, tk.END)
@@ -138,25 +129,48 @@ def ventana_clientes(parent=None):
             "No se encontró un cliente con ese DNI."
         )
 
-    botones = tk.Frame(ventana)
-    botones.pack(pady=10)
+    # Bloque de botones (al lado del formulario)
+    botones = tk.Frame(contenedor_superior)
+    botones.pack(side="left", anchor="n", padx=10)
 
     tk.Button(
         botones,
         text="Nuevo",
-        command=limpiar
-    ).grid(row=0, column=0, padx=5)
+        command=limpiar,
+        width=12
+    ).pack(pady=5)
 
     tk.Button(
         botones,
         text="Guardar",
-        command=guardar
-    ).grid(row=0, column=1, padx=5)
+        command=guardar,
+        width=12
+    ).pack(pady=5)
 
     tk.Button(
         botones,
         text="Buscar",
-        command=buscar
-    ).grid(row=0, column=2, padx=5)
+        command=buscar,
+        width=12
+    ).pack(pady=5)
+
+    # Tabla
+    tabla = ttk.Treeview(
+        ventana,
+        columns=("DNI", "Nombre", "Telefono", "Email"),
+        show="headings"
+    )
+
+    tabla.heading("DNI", text="DNI")
+    tabla.heading("Nombre", text="Nombre y apellido")
+    tabla.heading("Telefono", text="Teléfono")
+    tabla.heading("Email", text="Email")
+
+    tabla.column("DNI", width=150)
+    tabla.column("Nombre", width=300)
+    tabla.column("Telefono", width=200)
+    tabla.column("Email", width=300)
+
+    tabla.pack(fill="both", expand=True, padx=20, pady=20)
 
     actualizar_tabla()

@@ -12,8 +12,8 @@ ventana.title("PadelBeche")
 ventana.geometry("1280x720")
 
 #COLORES
-FONDO = "#196e50"
-BOTON = "#ff8c1b"
+FONDO = "#0C3C2B"
+BOTON = "#ef841a"
 BOTON_HOVER = "#27D7A3"
 BLANCO = "#FFFFFF"
 NEGRO = "#000000"

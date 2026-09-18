@@ -18,9 +18,13 @@ def ventana_reservas(parent=None):
     )
     titulo.pack(pady=20)
 
+    # Contenedor superior para el formulario y botones
+    contenedor_superior = tk.LabelFrame(ventana)
+    contenedor_superior.pack(anchor="w", padx=20, pady=10)
+
     # Formulario
-    formulario = tk.LabelFrame(ventana)
-    formulario.pack(anchor="w", padx=20, pady=10)
+    formulario = tk.Frame(contenedor_superior)
+    formulario.pack(side="left", padx=(0, 20))
 
     tk.Label(formulario, text="ID Reserva:").grid(
         row=0, column=0, padx=10, pady=5
@@ -69,36 +73,7 @@ def ventana_reservas(parent=None):
     entrada_estado.grid(row=6, column=1, padx=10, pady=5)
     entrada_estado.set("Pendiente")
 
-    # Tabla
-    tabla = ttk.Treeview(
-        ventana,
-        columns=(
-            "ID",
-            "Cliente",
-            "Cancha",
-            "Fecha",
-            "Inicio",
-            "Fin",
-            "Estado"
-        ),
-        show="headings"
-    )
-
-    tabla.heading("ID", text="ID Reserva")
-    tabla.heading("Cliente", text="Cliente")
-    tabla.heading("Cancha", text="Cancha")
-    tabla.heading("Fecha", text="Fecha")
-    tabla.heading("Inicio", text="Hora Inicio")
-    tabla.heading("Fin", text="Hora Fin")
-    tabla.heading("Estado", text="Estado")
-
-    tabla.pack(
-        fill="both",
-        expand=True,
-        padx=20,
-        pady=20
-    )
-
+    # Funciones internas
     def limpiar():
         entrada_id.delete(0, tk.END)
         entrada_cliente.delete(0, tk.END)
@@ -142,12 +117,10 @@ def ventana_reservas(parent=None):
             return True
 
         for reserva in reservas:
-
             if reserva["estado"] == "Cancelada":
                 continue
 
             if reserva["cancha"] == cancha and reserva["fecha"] == fecha:
-
                 inicio_existente = convertir_hora(reserva["inicio"])
                 fin_existente = convertir_hora(reserva["fin"])
 
@@ -205,12 +178,7 @@ def ventana_reservas(parent=None):
                 return
 
         if estado != "Cancelada":
-            if existe_superposicion(
-                cancha,
-                fecha,
-                inicio,
-                fin
-            ):
+            if existe_superposicion(cancha, fecha, inicio, fin):
                 messagebox.showerror(
                     "Cancha ocupada",
                     "La cancha ya tiene una reserva en ese horario."
@@ -239,43 +207,23 @@ def ventana_reservas(parent=None):
         id_reserva = entrada_id.get()
 
         for reserva in reservas:
-
             if reserva["id"] == id_reserva:
-
                 entrada_cliente.delete(0, tk.END)
-                entrada_cliente.insert(
-                    0,
-                    reserva["cliente"]
-                )
+                entrada_cliente.insert(0, reserva["cliente"])
 
                 entrada_cancha.delete(0, tk.END)
-                entrada_cancha.insert(
-                    0,
-                    reserva["cancha"]
-                )
+                entrada_cancha.insert(0, reserva["cancha"])
 
                 entrada_fecha.delete(0, tk.END)
-                entrada_fecha.insert(
-                    0,
-                    reserva["fecha"]
-                )
+                entrada_fecha.insert(0, reserva["fecha"])
 
                 entrada_inicio.delete(0, tk.END)
-                entrada_inicio.insert(
-                    0,
-                    reserva["inicio"]
-                )
+                entrada_inicio.insert(0, reserva["inicio"])
 
                 entrada_fin.delete(0, tk.END)
-                entrada_fin.insert(
-                    0,
-                    reserva["fin"]
-                )
+                entrada_fin.insert(0, reserva["fin"])
 
-                entrada_estado.set(
-                    reserva["estado"]
-                )
-
+                entrada_estado.set(reserva["estado"])
                 return
 
         messagebox.showinfo(
@@ -283,25 +231,67 @@ def ventana_reservas(parent=None):
             "No se encontró la reserva."
         )
 
-    botones = tk.Frame(ventana)
-    botones.pack(pady=10)
+    # Bloque de botones, al lado del formulario, uno debajo del otro
+    botones = tk.Frame(contenedor_superior)
+    botones.pack(side="left", anchor="n", padx=10)
 
     tk.Button(
         botones,
         text="Nuevo",
-        command=limpiar
-    ).grid(row=0, column=0, padx=5)
+        command=limpiar,
+        width=12
+    ).pack(pady=5)
 
     tk.Button(
         botones,
         text="Guardar",
-        command=guardar
-    ).grid(row=0, column=1, padx=5)
+        command=guardar,
+        width=12
+    ).pack(pady=5)
 
     tk.Button(
         botones,
         text="Buscar",
-        command=buscar
-    ).grid(row=0, column=2, padx=5)
+        command=buscar,
+        width=12
+    ).pack(pady=5)
+
+    # Tabla
+    tabla = ttk.Treeview(
+        ventana,
+        columns=(
+            "ID",
+            "Cliente",
+            "Cancha",
+            "Fecha",
+            "Inicio",
+            "Fin",
+            "Estado"
+        ),
+        show="headings"
+    )
+
+    tabla.heading("ID", text="ID Reserva")
+    tabla.heading("Cliente", text="Cliente")
+    tabla.heading("Cancha", text="Cancha")
+    tabla.heading("Fecha", text="Fecha")
+    tabla.heading("Inicio", text="Hora Inicio")
+    tabla.heading("Fin", text="Hora Fin")
+    tabla.heading("Estado", text="Estado")
+
+    tabla.column("ID", width=100)
+    tabla.column("Cliente", width=150)
+    tabla.column("Cancha", width=100)
+    tabla.column("Fecha", width=100)
+    tabla.column("Inicio", width=100)
+    tabla.column("Fin", width=100)
+    tabla.column("Estado", width=100)
+
+    tabla.pack(
+        fill="both",
+        expand=True,
+        padx=20,
+        pady=20
+    )
 
     actualizar_tabla()

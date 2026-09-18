@@ -16,70 +16,48 @@ def ventana_canchas(parent=None):
     )
     titulo.pack(pady=20)
 
+    # Contenedor superior (contiene formulario y botones)
+    contenedor_superior = tk.LabelFrame(ventana)
+    contenedor_superior.pack(anchor="w", padx=20, pady=10)
+
     # Formulario
-    formulario = tk.LabelFrame(ventana)
-    formulario.pack(fill="x",padx=20, pady=10)
+    formulario = tk.Frame(contenedor_superior)
+    formulario.pack(side="left", padx=(0, 20))
 
-    tk.Label(formulario, text="ID Cancha:").grid(row=1, column=0, padx=10, pady=5)
+    tk.Label(formulario, text="ID Cancha:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
     entrada_id = tk.Entry(formulario)
-    entrada_id.grid(row=1, column=1, padx=10, pady=5)
+    entrada_id.grid(row=0, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Capacidad:").grid(row=2, column=0, padx=10, pady=5 )
+    tk.Label(formulario, text="Capacidad:").grid(row=1, column=0, padx=10, pady=5, sticky="w")
     entrada_capacidad = tk.Entry(formulario)
-    entrada_capacidad.grid(row=2, column=1, padx=10, pady=5)
+    entrada_capacidad.grid(row=1, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Tipo:").grid(row=1, column=2, padx=10, pady=5)
+    tk.Label(formulario, text="Tipo:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
     entrada_tipo = ttk.Combobox(
         formulario,
         values=["Pádel", "Fútbol"],
         state="readonly"
     )
-    entrada_tipo.grid(row=1, column=3, padx=10, pady=5)
+    entrada_tipo.grid(row=2, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Nro. Personas:").grid(row=2, column=2, padx=10, pady=5)
+    tk.Label(formulario, text="Nro. Personas:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
     entrada_personas = tk.Entry(formulario)
-    entrada_personas.grid(row=2, column=3, padx=10, pady=5)
+    entrada_personas.grid(row=3, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Precio por hora:").grid(row=1, column=5, padx=10, pady=5)
+    tk.Label(formulario, text="Precio por hora:").grid(row=4, column=0, padx=10, pady=5, sticky="w")
     entrada_precio = tk.Entry(formulario)
-    entrada_precio.grid(row=1, column=6, padx=10, pady=5)
+    entrada_precio.grid(row=4, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Estado:").grid(row=2, column=5, padx=10, pady=5)
+    tk.Label(formulario, text="Estado:").grid(row=5, column=0, padx=10, pady=5, sticky="w")
     entrada_estado = ttk.Combobox(
         formulario,
         values=["Activa", "Inactiva"],
         state="readonly"
     )
-    entrada_estado.grid(row=2, column=6, padx=10, pady=5)
+    entrada_estado.grid(row=5, column=1, padx=10, pady=5)
+    entrada_estado.set("Activa")
 
-    # Tabla
-    tabla = ttk.Treeview(
-        ventana,
-        columns=(
-            "ID",
-            "Capacidad",
-            "Tipo",
-            "Personas",
-            "Precio",
-            "Estado"
-        ),
-        show="headings"
-    )
-
-    tabla.heading("ID", text="ID Cancha")
-    tabla.heading("Capacidad", text="Capacidad")
-    tabla.heading("Tipo", text="Tipo")
-    tabla.heading("Personas", text="Nro. Personas")
-    tabla.heading("Precio", text="Precio/Hora")
-    tabla.heading("Estado", text="Estado")
-
-    tabla.pack(
-        fill="both",
-        expand=True,
-        padx=20,
-        pady=20
-    )
-
+    # Funciones internas
     def limpiar():
         entrada_id.delete(0, tk.END)
         entrada_capacidad.delete(0, tk.END)
@@ -151,7 +129,6 @@ def ventana_canchas(parent=None):
 
         for cancha in canchas:
             if cancha["id"] == id_cancha:
-
                 entrada_capacidad.delete(0, tk.END)
                 entrada_capacidad.insert(0, cancha["capacidad"])
 
@@ -172,26 +149,66 @@ def ventana_canchas(parent=None):
             "No se encontró una cancha con ese ID."
         )
 
-    botones = tk.Frame(ventana)
-    botones.pack(pady=10)
+    # Bloque de botones
+    botones = tk.Frame(contenedor_superior)
+    botones.pack(side="left", anchor="n", padx=10)
 
     tk.Button(
         botones,
         text="Nuevo",
-        command=limpiar
-    ).grid(row=0, column=0, padx=5)
+        command=limpiar,
+        width=12
+    ).pack(pady=5)
 
     tk.Button(
         botones,
         text="Guardar",
-        command=guardar
-    ).grid(row=0, column=1, padx=5)
+        command=guardar,
+        width=12
+    ).pack(pady=5)
 
     tk.Button(
         botones,
         text="Buscar",
-        command=buscar
-    ).grid(row=0, column=2, padx=5)
+        command=buscar,
+        width=12
+    ).pack(pady=5)
+
+
+    # Tabla 
+    tabla = ttk.Treeview(
+        ventana,
+        columns=(
+            "ID",
+            "Capacidad",
+            "Tipo",
+            "Personas",
+            "Precio",
+            "Estado"
+        ),
+        show="headings"
+    )
+
+    tabla.heading("ID", text="ID Cancha")
+    tabla.heading("Capacidad", text="Capacidad")
+    tabla.heading("Tipo", text="Tipo")
+    tabla.heading("Personas", text="Nro. Personas")
+    tabla.heading("Precio", text="Precio/Hora")
+    tabla.heading("Estado", text="Estado")
+
+    tabla.column("ID", width=100)
+    tabla.column("Capacidad", width=100)
+    tabla.column("Tipo", width=120)
+    tabla.column("Personas", width=100)
+    tabla.column("Precio", width=100)
+    tabla.column("Estado", width=100)
+
+    tabla.pack(
+        fill="both",
+        expand=True,
+        padx=20,
+        pady=20
+    )
 
     limpiar()
     actualizar_tabla()
