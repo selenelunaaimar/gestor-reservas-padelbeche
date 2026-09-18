@@ -27,7 +27,6 @@ def mostrar_pantalla(constructor, titulo):
     ventana.title(f"PadelBeche - {titulo}")
     constructor(contenido)
 
-
 barra_navegacion = tk.Frame(ventana, bg=FONDO, width=220)
 barra_navegacion.pack(side="left", fill="y")
 barra_navegacion.pack_propagate(False)
@@ -36,13 +35,20 @@ contenido = tk.Frame(ventana, bg=BLANCO)
 contenido.pack(side="right", fill="both", expand=True)
 
 #padx agrega espacio horizontal dentro o alrededor de un elemento
-#pady agrega espacio vertical
-tk.Label(
+#pady agrega espacio vertical.
+#Convertimos el nombre PADEL BECHE en un boton para que siempre vuelva a la pantalla principal
+tk.Button(
     barra_navegacion,
     text="PADEL BECHE",
+    command=lambda: mostrar_pantalla(pantalla_inicio, "Inicio"),
     bg=FONDO,
     fg=BLANCO,
-    font=("Pagoh Cluser", 18, "bold")
+    font=("Pagoh Cluser", 18, "bold"),
+    activebackground=FONDO,
+    activeforeground=BLANCO,
+    relief="flat",
+    bd=0,
+    cursor="hand2"
 ).pack(pady=(25, 35))
 
 def crear_boton(texto, constructor, titulo):
@@ -61,7 +67,6 @@ def crear_boton(texto, constructor, titulo):
         bd=0,
         cursor="hand2"
     ).pack(pady=6)
-
 
 def pantalla_inicio(contenedor):
     tk.Label(
@@ -94,7 +99,7 @@ def pantalla_inicio(contenedor):
         show="headings"
     )
 
-#el ancho de las columnas las definimos con width, anchor es para colocar el contenido en el un espacio determinado.
+#el ancho de las columnas las definimos con width (920 pixeles), anchor es para colocar el contenido en el un espacio determinado.
 #        anchor="w"  # izquierda
 #        anchor="e"  # derecha
 #        anchor="center"  # centro
@@ -111,14 +116,14 @@ def pantalla_inicio(contenedor):
     tabla.heading("Hora Fin", text="Hora Fin")
     tabla.heading("Estado", text="Estado")
 
-    tabla.column("Id Reserva", width=80, anchor="center", stretch=False)
-    tabla.column("Cliente", width=200, anchor="center", stretch=False)
-    tabla.column("Dni", width=100, anchor="center", stretch=False)
-    tabla.column("Cancha", width=120, anchor="center", stretch=False)
-    tabla.column("Fecha", width=100, anchor="center", stretch=False)
-    tabla.column("Hora Inicio", width=100, anchor="center", stretch=False)
-    tabla.column("Hora Fin", width=100, anchor="center", stretch=False)
-    tabla.column("Estado", width=80, anchor="center", stretch=False)
+    tabla.column("Id Reserva", width=80, anchor="center", stretch=True)
+    tabla.column("Cliente", width=240, anchor="center", stretch=True)
+    tabla.column("Dni", width=100, anchor="center", stretch=True)
+    tabla.column("Cancha", width=120, anchor="center", stretch=True)
+    tabla.column("Fecha", width=100, anchor="center", stretch=True)
+    tabla.column("Hora Inicio", width=100, anchor="center", stretch=True)
+    tabla.column("Hora Fin", width=100, anchor="center", stretch=True)
+    tabla.column("Estado", width=80, anchor="center", stretch=True)
     tabla.pack(fill="both", expand=True)
 
     formatos_fecha = ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d")

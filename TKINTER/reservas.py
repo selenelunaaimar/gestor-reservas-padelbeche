@@ -19,8 +19,8 @@ def ventana_reservas(parent=None):
     titulo.pack(pady=20)
 
     # Formulario
-    formulario = tk.Frame(ventana)
-    formulario.pack(pady=10)
+    formulario = tk.LabelFrame(ventana)
+    formulario.pack(fill="x",padx=20, pady=10)
 
     tk.Label(formulario, text="ID Reserva:").grid(
         row=0, column=0, padx=10, pady=5

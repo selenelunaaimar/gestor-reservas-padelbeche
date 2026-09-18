@@ -19,24 +19,24 @@ def ventana_clientes(parent=None):
     titulo.pack(pady=20)
 
     # Datos del cliente
-    formulario = tk.Frame(ventana)
-    formulario.pack(pady=10)
+    formulario = tk.LabelFrame(ventana)
+    formulario.pack(fill="x",padx=20, pady=10)
 
-    tk.Label(formulario, text="DNI:").grid(row=0, column=0, padx=10, pady=5)
+    tk.Label(formulario, text="DNI:").grid(row=1, column=0, padx=10, pady=5)
     entrada_dni = tk.Entry(formulario)
-    entrada_dni.grid(row=0, column=1, padx=10, pady=5)
+    entrada_dni.grid(row=1, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Nombre y apellido:").grid(row=1, column=0, padx=10, pady=5)
+    tk.Label(formulario, text="Nombre y apellido:").grid(row=2, column=0, padx=10, pady=5)
     entrada_nombre = tk.Entry(formulario)
-    entrada_nombre.grid(row=1, column=1, padx=10, pady=5)
+    entrada_nombre.grid(row=2, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Teléfono:").grid(row=2, column=0, padx=10, pady=5)
+    tk.Label(formulario, text="Teléfono:").grid(row=1, column=2, padx=10, pady=5)
     entrada_telefono = tk.Entry(formulario)
-    entrada_telefono.grid(row=2, column=1, padx=10, pady=5)
+    entrada_telefono.grid(row=1, column=3, padx=10, pady=5)
 
-    tk.Label(formulario, text="Email:").grid(row=3, column=0, padx=10, pady=5)
+    tk.Label(formulario, text="Email:").grid(row=2, column=2, padx=10, pady=5)
     entrada_email = tk.Entry(formulario)
-    entrada_email.grid(row=3, column=1, padx=10, pady=5)
+    entrada_email.grid(row=2, column=3, padx=10, pady=5)
 
     # Tabla
     tabla = ttk.Treeview(
