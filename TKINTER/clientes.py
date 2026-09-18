@@ -22,6 +22,13 @@ def ventana_clientes(parent=None):
     formulario = tk.LabelFrame(ventana)
     formulario.pack(fill="x",padx=20, pady=10)
 
+    # Titulo dentro de formulario
+    tk.Label(
+        formulario,
+        text="👤 CLIENTES",
+        font=("Arial", 12, "bold")
+    ).grid(row=0, column=0, columnspan=4, sticky="w", padx=10, pady=(10, 10))
+
     tk.Label(formulario, text="DNI:").grid(row=1, column=0, padx=10, pady=5)
     entrada_dni = tk.Entry(formulario)
     entrada_dni.grid(row=1, column=1, padx=10, pady=5)
