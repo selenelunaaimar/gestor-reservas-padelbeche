@@ -1,7 +1,7 @@
 CREATE TABLE clientes (
-    dni VARCHAR(20) PRIMARY KEY NOT NULL,
+    dni INTEGER PRIMARY KEY NOT NULL,
     nombre_apellido VARCHAR(100) NOT NULL,
-    telefono VARCHAR(30) NOT NULL,
+    telefono INTEGER NOT NULL,
     email VARCHAR(100) NOT NULL
 );
 CREATE TABLE canchas (
@@ -13,11 +13,11 @@ CREATE TABLE canchas (
 );
 CREATE TABLE reservas (
     id_reserva INTEGER PRIMARY KEY AUTOINCREMENT,
-    dni_cliente VARCHAR(20) NOT NULL,
+    dni_cliente INTEGER NOT NULL,
     id_cancha INTEGER NOT NULL,
-    fecha TEXT NOT NULL,
-    hora_inicio TEXT NOT NULL,
-    hora_fin TEXT NOT NULL,
+    fecha DATETIME NOT NULL,
+    hora_inicio DATETIME NOT NULL,
+    hora_fin DATETIME NOT NULL,
     estado_reserva VARCHAR(20) NOT NULL,
 
     FOREIGN KEY (dni_cliente) REFERENCES clientes(dni),

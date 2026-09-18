@@ -73,18 +73,66 @@ def ventana_clientes(parent=None):
             )
 
     def guardar():
-        dni = entrada_dni.get()
-        nombre = entrada_nombre.get()
-        telefono = entrada_telefono.get()
-        email = entrada_email.get()
+        dni = entrada_dni.get().strip() #.strip elimina espacios
+        nombre = entrada_nombre.get().strip()
+        telefono = entrada_telefono.get().strip()
+        email = entrada_email.get().strip()
 
-        if dni == "" or nombre == "":
+        #if dni == "" or nombre == "":
+         #   messagebox.showwarning(
+          #      "Datos incompletos",
+           #     "DNI y nombre son obligatorios."
+            #)
+            #return
+        if not dni: #validac dni
             messagebox.showwarning(
                 "Datos incompletos",
-                "DNI y nombre son obligatorios."
+                "Debe ingresar DNI"
             )
             return
 
+        if not nombre: #validac nombre
+            messagebox.showwarning(
+                "Datos incompletos",
+                "Debe ingresar nombre y apellido."
+            )
+            return
+
+        if not telefono: #validac telefono
+            messagebox.showwarning(
+                "Datos incompletos",
+                "Debe ingresar el teléfono."
+            )
+            return
+        
+        if not email: #validac email
+            messagebox.showwarning(
+                "Datos incompletos",
+                "Debe ingresar mail."
+            )
+            return
+
+        if not dni.isdigit(): #valida q DNI sea numérico
+            messagebox.showerror(
+                "Error",
+                "El DNI debe contener sólo números."
+            )
+            return
+
+        if len(dni) < 7 or len(dni) > 8: #valida la long del DNI
+            messagebox.showerror(
+                "Error",
+                "El DNI debe tener entre 7 y 8 dígitos."
+            )
+            return
+
+        if not telefono.isdigit():
+            messagebox.showerror(
+                "Error",
+                "El teléfono debe contener sólo números."
+            )
+            return
+        #sigo aca 
         for cliente in clientes:
             if cliente["dni"] == dni:
                 messagebox.showerror(
