@@ -72,6 +72,11 @@ def ventana_consultas(parent=None):
         row=1, column=3, padx=5, pady=5
     )
 
+    # Titulo dentro de formulario
+    tk.Label(
+        ventana, text="RESULTADOS", font=("Arial", 14, "bold")
+    ).pack(anchor="w", padx=20, pady=(10, 0))
+
     # Tabla de resultados
     tabla = ttk.Treeview(
         ventana,
