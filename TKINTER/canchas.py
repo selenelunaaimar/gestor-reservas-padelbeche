@@ -1,9 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 
-
 canchas = []
-
 
 def ventana_canchas(parent=None):
     ventana = parent or tk.Toplevel()
@@ -19,52 +17,40 @@ def ventana_canchas(parent=None):
     titulo.pack(pady=20)
 
     # Formulario
-    formulario = tk.Frame(ventana)
-    formulario.pack(pady=10)
+    formulario = tk.LabelFrame(ventana)
+    formulario.pack(fill="x",padx=20, pady=10)
 
-    tk.Label(formulario, text="ID Cancha:").grid(
-        row=0, column=0, padx=10, pady=5
-    )
+    tk.Label(formulario, text="ID Cancha:").grid(row=1, column=0, padx=10, pady=5)
     entrada_id = tk.Entry(formulario)
-    entrada_id.grid(row=0, column=1, padx=10, pady=5)
+    entrada_id.grid(row=1, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Capacidad:").grid(
-        row=1, column=0, padx=10, pady=5
-    )
+    tk.Label(formulario, text="Capacidad:").grid(row=2, column=0, padx=10, pady=5 )
     entrada_capacidad = tk.Entry(formulario)
-    entrada_capacidad.grid(row=1, column=1, padx=10, pady=5)
+    entrada_capacidad.grid(row=2, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Tipo:").grid(
-        row=2, column=0, padx=10, pady=5
-    )
+    tk.Label(formulario, text="Tipo:").grid(row=1, column=2, padx=10, pady=5)
     entrada_tipo = ttk.Combobox(
         formulario,
         values=["Pádel", "Fútbol"],
         state="readonly"
     )
-    entrada_tipo.grid(row=2, column=1, padx=10, pady=5)
+    entrada_tipo.grid(row=1, column=3, padx=10, pady=5)
 
-    tk.Label(formulario, text="Nro. Personas:").grid(
-        row=3, column=0, padx=10, pady=5
-    )
+    tk.Label(formulario, text="Nro. Personas:").grid(row=2, column=2, padx=10, pady=5)
     entrada_personas = tk.Entry(formulario)
-    entrada_personas.grid(row=3, column=1, padx=10, pady=5)
+    entrada_personas.grid(row=2, column=3, padx=10, pady=5)
 
-    tk.Label(formulario, text="Precio por hora:").grid(
-        row=4, column=0, padx=10, pady=5
-    )
+    tk.Label(formulario, text="Precio por hora:").grid(row=1, column=5, padx=10, pady=5)
     entrada_precio = tk.Entry(formulario)
-    entrada_precio.grid(row=4, column=1, padx=10, pady=5)
+    entrada_precio.grid(row=1, column=6, padx=10, pady=5)
 
-    tk.Label(formulario, text="Estado:").grid(
-        row=5, column=0, padx=10, pady=5
-    )
+    tk.Label(formulario, text="Estado:").grid(row=2, column=5, padx=10, pady=5)
     entrada_estado = ttk.Combobox(
         formulario,
         values=["Activa", "Inactiva"],
         state="readonly"
     )
-    entrada_estado.grid(row=5, column=1, padx=10, pady=5)
+    entrada_estado.grid(row=2, column=6, padx=10, pady=5)
 
     # Tabla
     tabla = ttk.Treeview(
