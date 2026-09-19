@@ -79,13 +79,13 @@ def ventana_clientes(parent=None):
         email = entrada_email.get().strip()
         patron_email=r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
-        #if dni == "" or nombre == "":(
-         #   messagebox.showwarning(
-          #      "Datos incompletos",
-           #     "DNI y nombre son obligatorios."
-            #)
-        #return
-
+        if not dni and not nombre and not telefono and not email: #valida q no haya ningun campo sin dato
+            messagebox.showerror(
+                "Datos incompletos",
+                "Debe completar los datos del cliente."
+            )
+            return 
+        
         if not dni: #valida dni oblig
             messagebox.showwarning(
                 "Datos incompletos",
@@ -127,11 +127,11 @@ def ventana_clientes(parent=None):
                 "El DNI debe tener entre 7 y 8 dígitos."
             )
             return
-        #validac nom
-        if nombre.isdigit(): #valida nom s/num
+        
+        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+", nombre): #valida nom sólo letras
                 messagebox.showerror(
                     "Error",
-                    "El nombre no puede contener números"
+                    "Ingrese un nombre válido."
                 )
                 return
         
@@ -142,17 +142,17 @@ def ventana_clientes(parent=None):
             )
             return
         
-        if not telefono.isdigit(): #Varchar o int?
+        if not telefono.isdigit(): #valida tel sea integer
             messagebox.showerror(
                 "Error",
                 "El teléfono debe contener sólo números."
             )
             return
 
-        if len(telefono) < 8:
+        if len(telefono) < 8 or len(telefono) > 15:
             messagebox.showerror(
                 "Error",
-                "El teléfono ingresado no es válido."
+                "El teléfono debe tener entre 8 y 15 dígitos."
             )
             return
         
