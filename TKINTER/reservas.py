@@ -261,6 +261,29 @@ def ventana_reservas(parent=None):
 
         messagebox.showinfo("Buscar", "No se encontró la reserva.")
 
+    def eliminar():
+        seleccion = tabla.selection()
+        if not seleccion:
+            messagebox.showwarning(
+                "Eliminar", "Debe seleccionar una reserva de la tabla."
+            )
+            return
+
+        item = tabla.item(seleccion[0])
+        id_reserva = str(item["values"][0])
+
+        if not messagebox.askyesno(
+            "Eliminar",
+            f"¿Está seguro de eliminar la reserva con ID {id_reserva}?",
+        ):
+            return
+
+        reservas[:] = [
+            reserva for reserva in reservas
+            if str(reserva["id"]) != str(id_reserva)
+        ]
+        
+        actualizar_tabla()
     # Bloque de botones, al lado del formulario, uno debajo del otro
     botones = tk.Frame(contenedor_superior)
     botones.pack(side="left", anchor="n", padx=10)
@@ -275,6 +298,13 @@ def ventana_reservas(parent=None):
 
     tk.Button(
         botones, text="Buscar", command=buscar, width=12
+    ).pack(pady=5)
+
+    tk.Button(
+        botones,
+        text="Eliminar",
+        command=eliminar,
+        width=12
     ).pack(pady=5)
 
     # Tabla
