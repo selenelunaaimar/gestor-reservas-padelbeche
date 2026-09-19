@@ -31,12 +31,53 @@ def ventana_consultas(parent=None):
     )
     filtros.pack(side="left", padx=(0, 20))
 
-    # Título
+    # ------------------------------------------------
+    # ICONO DE LUPA + TÍTULO
+    # ------------------------------------------------
+
+    encabezado_filtros = tk.Frame(filtros)
+    encabezado_filtros.grid(
+        row=0,
+        column=0,
+        columnspan=4,
+        sticky="w",
+        padx=5,
+        pady=(0, 5)
+    )
+
+    # Canvas para dibujar la lupa
+    lupa = tk.Canvas(
+        encabezado_filtros,
+        width=22,
+        height=22,
+        highlightthickness=0
+    )
+    lupa.pack(side="left", padx=(0, 6))
+
+    # Círculo de la lupa
+    lupa.create_oval(
+        3, 3, 14, 14,
+        outline="black",
+        width=2
+    )
+
+    # Mango de la lupa
+    lupa.create_line(
+        13, 13, 19, 19,
+        fill="black",
+        width=2
+    )
+
+    # Texto
     tk.Label(
-        filtros,
+        encabezado_filtros,
         text="Filtros de búsqueda",
         font=("Arial", 11, "bold")
-    ).grid(row=0, column=0, columnspan=4, sticky="w", padx=5, pady=(0, 5))
+    ).pack(side="left")
+
+    # ------------------------------------------------
+    # CAMPOS DE FILTRO
+    # ------------------------------------------------
 
     tk.Label(filtros, text="Desde:").grid(
         row=1, column=0, padx=5, pady=5, sticky="w"
@@ -82,7 +123,10 @@ def ventana_consultas(parent=None):
         row=2, column=3, padx=5, pady=5
     )
 
-    # Funciones internas
+    # ------------------------------------------------
+    # FUNCIONES INTERNAS
+    # ------------------------------------------------
+
     def cargar_filtros():
         nombres_clientes = ["Todos"]
 
@@ -173,7 +217,10 @@ def ventana_consultas(parent=None):
                 "No se encontraron reservas."
             )
 
-    # Bloque de botones
+    # ------------------------------------------------
+    # BOTONES
+    # ------------------------------------------------
+
     botones = tk.Frame(contenedor_superior)
     botones.pack(side="left", anchor="center", padx=10)
 
@@ -191,13 +238,20 @@ def ventana_consultas(parent=None):
         width=12
     ).pack(pady=5)
 
+    # ------------------------------------------------
+    # TÍTULO RESULTADOS
+    # ------------------------------------------------
 
-    # Titulo en formulario
     tk.Label(
-        ventana, text="RESULTADOS", font=("Arial", 14, "bold")
+        ventana,
+        text="RESULTADOS",
+        font=("Arial", 14, "bold")
     ).pack(anchor="w", padx=20, pady=(10, 0))
 
-    # Tabla de resultados
+    # ------------------------------------------------
+    # TABLA DE RESULTADOS
+    # ------------------------------------------------
+
     tabla = ttk.Treeview(
         ventana,
         columns=(
