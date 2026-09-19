@@ -266,7 +266,7 @@ def ventana_reservas(parent=None):
     botones.pack(side="left", anchor="n", padx=10)
 
     tk.Button(
-        botones, text="Nuevo", command=limpiar, width=12
+        botones, text="Limpiar", command=limpiar, width=12
     ).pack(pady=5)
 
     tk.Button(

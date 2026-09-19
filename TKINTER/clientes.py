@@ -49,7 +49,7 @@ def ventana_clientes(parent=None):
     entrada_email.grid(row=2, column=3, padx=10, pady=5)
 
     # Funciones internas
-    def limpiar():
+    def limpiar(): #limpia los campos del formulario
         entrada_dni.delete(0, tk.END)
         entrada_nombre.delete(0, tk.END)
         entrada_telefono.delete(0, tk.END)
@@ -113,7 +113,7 @@ def ventana_clientes(parent=None):
             )
             return
 
-        if not dni.isdigit(): #valida q DNI sea integer
+        if not dni.isdigit(): #valida q DNI sean nros
             messagebox.showerror(
                 "Error",
                 "El DNI debe contener sólo números."
@@ -141,7 +141,7 @@ def ventana_clientes(parent=None):
             )
             return
         
-        if not telefono.isdigit(): #valida tel sea integer
+        if not telefono.isdigit(): #valida tel sean nros
             messagebox.showerror(
                 "Error",
                 "El teléfono debe contener sólo números."
@@ -182,7 +182,7 @@ def ventana_clientes(parent=None):
 
         messagebox.showinfo("Cliente", "Cliente guardado correctamente.")
 
-    def buscar():
+    def buscar(): #busca registro por dni y lo muestra en el formulario del dict [clientes]
         dni = entrada_dni.get()
 
         for cliente in clientes:
@@ -203,13 +203,49 @@ def ventana_clientes(parent=None):
             "No se encontró un cliente con ese DNI."
         )
 
+    def eliminar():
+        seleccion = tabla.selection()
+        if not seleccion:
+            messagebox.showwarning(
+                "Eliminar",
+                "Debe seleccionar un cliente de la tabla."
+            )
+            return
+
+        item=tabla.item(seleccion[0])
+        dni = str(item["values"][0])
+
+        if not messagebox.askyesno(
+            "Eliminar",
+            f"¿Está seguro de eliminar el cliente con DNI {dni}?"
+        ):
+            return
+
+        # for cliente in clientes:
+        #     if str(cliente["dni"]) == str(dni):
+        #         clientes.remove(cliente)
+        #         break
+
+        clientes[:] = [
+            cliente
+            for cliente in clientes
+            if str(cliente["dni"]) != str(dni)
+        ]
+        
+        actualizar_tabla()
+
+        messagebox.showinfo("Eliminar", "Cliente eliminado correctamente."
+        )
+    #fin eliminar()
+    
+
     # Bloque de botones (al lado del formulario)
     botones = tk.Frame(contenedor_superior)
     botones.pack(side="left", anchor="n", padx=10)
 
     tk.Button(
         botones,
-        text="Nuevo",
+        text="Limpiar",
         command=limpiar,
         width=12
     ).pack(pady=5)
@@ -225,6 +261,13 @@ def ventana_clientes(parent=None):
         botones,
         text="Buscar",
         command=buscar,
+        width=12
+    ).pack(pady=5)
+
+    tk.Button(
+        botones,
+        text="Eliminar",
+        command=eliminar,
         width=12
     ).pack(pady=5)
 

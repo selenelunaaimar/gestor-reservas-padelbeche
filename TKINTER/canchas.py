@@ -96,6 +96,7 @@ def ventana_canchas(parent=None):
         if not id_cancha or not capacidad or not tipo or not precio or not estado:
             messagebox.showwarning("Datos incompletos", "Todos los campos son obligatorios.")
             return
+
         
         if not id_cancha.isdigit(): #validar id sea integer
             messagebox.showerror(
@@ -119,7 +120,7 @@ def ventana_canchas(parent=None):
             )
             return
         
-        try:                    #precio_hora admite decimales?
+        try:                    #precio_hora admite decimales
             precio_num= float(precio)
         except ValueError:
             messagebox.showerror(
@@ -144,7 +145,7 @@ def ventana_canchas(parent=None):
 
         canchas.append({ #guardar datos e
             "id": id_cancha,
-            "capacidad": capacidad,
+            "capacidad": capacidad_num,
             "tipo": tipo,
             "precio": precio_num,
             "estado": estado,
@@ -181,7 +182,7 @@ def ventana_canchas(parent=None):
     botones.pack(side="left", anchor="n", padx=10)
 
     tk.Button(
-        botones, text="Nuevo", command=limpiar, width=12
+        botones, text="Limpiar", command=limpiar, width=12
     ).pack(pady=5)
 
     tk.Button(
