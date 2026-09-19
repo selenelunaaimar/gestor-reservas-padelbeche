@@ -87,9 +87,11 @@ def ventana_canchas(parent=None):
         id_cancha = entrada_id.get()
         capacidad = entrada_capacidad.get()
         tipo = entrada_tipo.get()
-        precio = entrada_precio.get()
+        precio = entrada_precio.get().strip()
         estado = entrada_estado.get()
-
+        capacidad_num=int(capacidad) #para validar q sea !=0
+        precio=precio.replace(",", ".") #reemplazar coma por punto
+        
         # Validacion para que todos los campos sean obligatorios
         if (
             id_cancha == ""
@@ -103,7 +105,46 @@ def ventana_canchas(parent=None):
             )
             return
 
-        for cancha in canchas:
+        if not id_cancha.isdigit():
+            messagebox.showerror(
+                "Error", 
+                "El ID de cancha de ser un número."
+            )
+            return
+
+        #validar deporte?
+
+        if not capacidad.isdigit():
+            messagebox.showerror(
+                "Error",
+                "La capacidad debe ser un número."
+            )
+            return
+        
+        if capacidad_num <= 0: #validar sea != 0
+            messagebox.showerror(
+                "Error",
+                "La capacidad deber ser mayor a cero."
+            )
+            return
+        
+        try:                    #precio_hora admite decimales?
+            precio_num= float(precio)
+        except ValueError:
+            messagebox.showerror(
+                "Error",
+                "El precio debe ser un número válido."
+            )
+            return
+        
+        if precio <=0:
+            messagebox.showerror(
+                "Error",
+                "El precio debe ser mayor a cero."
+            )
+            return
+             
+        for cancha in canchas: #validar id dupli
             if cancha["id"] == id_cancha:
                 messagebox.showerror(
                     "Error", "Ya existe una cancha con ese ID."
@@ -114,7 +155,7 @@ def ventana_canchas(parent=None):
             "id": id_cancha,
             "capacidad": capacidad,
             "tipo": tipo,
-            "precio": precio,
+            "precio": precio_num,
             "estado": estado,
         })
 
