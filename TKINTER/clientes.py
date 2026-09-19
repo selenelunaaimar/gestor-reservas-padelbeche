@@ -235,16 +235,16 @@ def ventana_clientes(parent=None):
     # Tabla
     tabla = ttk.Treeview(
         ventana,
-        columns=("DNI", "Nombre", "Telefono", "Email"),
+        columns=("dni", "Nombre", "Telefono", "Email"),
         show="headings"
     )
 
-    tabla.heading("DNI", text="DNI")
+    tabla.heading("dni", text="DNI")
     tabla.heading("Nombre", text="Nombre y apellido")
     tabla.heading("Telefono", text="Teléfono")
     tabla.heading("Email", text="Email")
 
-    tabla.column("DNI", width=150)
+    tabla.column("dni", width=150)
     tabla.column("Nombre", width=300)
     tabla.column("Telefono", width=200)
     tabla.column("Email", width=300)
