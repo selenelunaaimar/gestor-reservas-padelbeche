@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-
+import re
 
 clientes = []
 
@@ -77,42 +77,44 @@ def ventana_clientes(parent=None):
         nombre = entrada_nombre.get().strip()
         telefono = entrada_telefono.get().strip()
         email = entrada_email.get().strip()
+        patron_email=r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
-        #if dni == "" or nombre == "":
+        #if dni == "" or nombre == "":(
          #   messagebox.showwarning(
           #      "Datos incompletos",
            #     "DNI y nombre son obligatorios."
             #)
-            #return
-        if not dni: #validac dni
+        #return
+
+        if not dni: #valida dni oblig
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar DNI"
             )
             return
 
-        if not nombre: #validac nombre
+        if not nombre: #valida nom oblig
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar nombre y apellido."
             )
             return
 
-        if not telefono: #validac telefono
+        if not telefono: #valida tel oblig
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar el teléfono."
             )
             return
         
-        if not email: #validac email
+        if not email: #valida email oblig
             messagebox.showwarning(
                 "Datos incompletos",
-                "Debe ingresar mail."
+                "Debe ingresar email."
             )
             return
 
-        if not dni.isdigit(): #valida q DNI sea numérico
+        if not dni.isdigit(): #valida q DNI sea integer
             messagebox.showerror(
                 "Error",
                 "El DNI debe contener sólo números."
@@ -125,15 +127,43 @@ def ventana_clientes(parent=None):
                 "El DNI debe tener entre 7 y 8 dígitos."
             )
             return
-
-        if not telefono.isdigit():
+        #validac nom
+        if nombre.isdigit(): #valida nom s/num
+                messagebox.showerror(
+                    "Error",
+                    "El nombre no puede contener números"
+                )
+                return
+        
+        if len(nombre) < 3: #valida long nom y apel
+            messagebox.showerror(
+                "Error",
+                "El nombre debe tener al menos 3 caracteres."
+            )
+            return
+        
+        if not telefono.isdigit(): #Varchar o int?
             messagebox.showerror(
                 "Error",
                 "El teléfono debe contener sólo números."
             )
             return
-        #sigo aca 
-        for cliente in clientes:
+
+        if len(telefono) < 8:
+            messagebox.showerror(
+                "Error",
+                "El teléfono ingresado no es válido."
+            )
+            return
+        
+        if not re.match(patron_email, email): #valida email
+            messagebox.showerror(
+                "Error",
+                "Debe ingresar un mail válido."
+            )
+            return
+        
+        for cliente in clientes: #valida dni dupli
             if cliente["dni"] == dni:
                 messagebox.showerror(
                     "Error",
