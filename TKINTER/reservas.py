@@ -4,7 +4,6 @@ from tkinter import messagebox, ttk
 
 reservas = []
 
-
 def ventana_reservas(parent=None):
     ventana = parent or tk.Toplevel()
     if parent is None:
@@ -139,32 +138,54 @@ def ventana_reservas(parent=None):
         return False
 
     def guardar():
-        id_reserva = entrada_id.get()
-        cliente = entrada_cliente.get()
-        cancha = entrada_cancha.get()
-        fecha = entrada_fecha.get()
-        inicio = entrada_inicio.get()
-        fin = entrada_fin.get()
-        estado = entrada_estado.get()
+        id_reserva = entrada_id.get().strip()
+        cliente = entrada_cliente.get().strip()
+        cancha = entrada_cancha.get().strip()
+        fecha = entrada_fecha.get().strip()
+        inicio = entrada_inicio.get().strip()
+        fin = entrada_fin.get().strip()
+        estado = entrada_estado.get().strip()
 
-        if (
-            id_reserva == ""
-            or cliente == ""
-            or cancha == ""
-            or fecha == ""
-            or inicio == ""
-            or fin == ""
-        ):
-            messagebox.showwarning(
-                "Datos incompletos", "Complete todos los campos obligatorios."
-            )
+        # Validacion para que todos los campos sean obligatorios
+        if not id_reserva or not cliente or not cancha or not fecha or not inicio or not fin or not estado:
+            messagebox.showwarning("Datos incompletos", "Complete todos los campos obligatorios.")
             return
-
+        
         # Validacion estricta del formato de fecha
         if not validar_fecha(fecha):
             messagebox.showerror(
                 "Error de formato",
                 "La fecha debe tener el formato AAAA-MM-DD (ej: 2026-09-25).",
+            )
+            return
+
+        if not id_reserva.isdigit(): #valida id sea integer
+            messagebox.showerror(
+                "Error", "El ID de reserva debe ser un número."
+            )
+            return
+
+        if not cliente.isdigit(): #valida id cliente sea integer
+            messagebox.showerror(
+                "Error", "El ID del cliente debe ser un número."
+            )
+            return
+
+        if len(cliente) < 7 or len(cliente) > 8: #valida la long del DNI
+            messagebox.showerror(
+                "Error", "El ID del cliente debe tener entre 7 y 8 dígitos."
+            )
+            return
+
+        if not cancha.isdigit(): #valida id cancha sea integer
+            messagebox.showerror(
+                "Error", "El ID de la cancha debe ser un número."
+            )
+            return
+        cancha_num = int(cancha)
+        if cancha_num <= 0:
+            messagebox.showerror(
+                "Error", "El ID de la cancha debe ser mayor a cero."
             )
             return
 
@@ -213,9 +234,10 @@ def ventana_reservas(parent=None):
         limpiar()
 
         messagebox.showinfo("Reserva", "Reserva guardada correctamente.")
+    #fin guardar()
 
     def buscar():
-        id_reserva = entrada_id.get()
+        id_reserva = entrada_id.get().strip()
 
         for reserva in reservas:
             if reserva["id"] == id_reserva:

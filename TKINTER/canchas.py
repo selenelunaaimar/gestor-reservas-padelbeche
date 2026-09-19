@@ -3,7 +3,6 @@ from tkinter import messagebox, ttk
 
 canchas = []
 
-
 def ventana_canchas(parent=None):
     ventana = parent or tk.Toplevel()
     if parent is None:
@@ -80,47 +79,39 @@ def ventana_canchas(parent=None):
                     cancha["tipo"],
                     cancha["precio"],
                     cancha["estado"],
-                ),
+                )
             )
 
     def guardar():
-        id_cancha = entrada_id.get()
-        capacidad = entrada_capacidad.get()
+        id_cancha = entrada_id.get().strip()
+        capacidad = entrada_capacidad.get().strip()
         tipo = entrada_tipo.get()
         precio = entrada_precio.get().strip()
         estado = entrada_estado.get()
-        capacidad_num=int(capacidad) #para validar q sea !=0
-        precio=precio.replace(",", ".") #reemplazar coma por punto
-        
-        # Validacion para que todos los campos sean obligatorios
-        if (
-            id_cancha == ""
-            or capacidad == ""
-            or tipo == ""
-            or precio == ""
-            or estado == ""
-        ):
-            messagebox.showwarning(
-                "Datos incompletos", "Todos los campos son obligatorios."
-            )
-            return
 
-        if not id_cancha.isdigit():
+        #capacidad_num=int(capacidad) #para validar q sea !=0
+        precio=precio.replace(",", ".") #reemplazar coma por punto
+
+        # Validacion para que todos los campos sean obligatorios
+        if not id_cancha or not capacidad or not tipo or not precio or not estado:
+            messagebox.showwarning("Datos incompletos", "Todos los campos son obligatorios.")
+            return
+        
+        if not id_cancha.isdigit(): #validar id sea integer
             messagebox.showerror(
                 "Error", 
                 "El ID de cancha de ser un número."
             )
             return
 
-        #validar deporte?
-
-        if not capacidad.isdigit():
+        if not capacidad.isdigit(): #validar capac sea integer
             messagebox.showerror(
                 "Error",
                 "La capacidad debe ser un número."
             )
             return
-        
+        capacidad_num=int(capacidad) #para validar q sea !=0
+
         if capacidad_num <= 0: #validar sea != 0
             messagebox.showerror(
                 "Error",
@@ -137,7 +128,7 @@ def ventana_canchas(parent=None):
             )
             return
         
-        if precio <=0:
+        if precio_num <=0:
             messagebox.showerror(
                 "Error",
                 "El precio debe ser mayor a cero."
@@ -151,7 +142,7 @@ def ventana_canchas(parent=None):
                 )
                 return
 
-        canchas.append({
+        canchas.append({ #guardar datos e
             "id": id_cancha,
             "capacidad": capacidad,
             "tipo": tipo,
@@ -224,3 +215,4 @@ def ventana_canchas(parent=None):
 
     limpiar()
     actualizar_tabla()
+

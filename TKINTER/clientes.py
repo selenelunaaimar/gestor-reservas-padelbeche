@@ -4,7 +4,6 @@ import re
 
 clientes = []
 
-
 def ventana_clientes(parent=None):
     ventana = parent or tk.Toplevel()
     if parent is None:
@@ -181,10 +180,7 @@ def ventana_clientes(parent=None):
         actualizar_tabla()
         limpiar()
 
-        messagebox.showinfo(
-            "Cliente",
-            "Cliente guardado correctamente."
-        )
+        messagebox.showinfo("Cliente", "Cliente guardado correctamente.")
 
     def buscar():
         dni = entrada_dni.get()
@@ -232,7 +228,7 @@ def ventana_clientes(parent=None):
         width=12
     ).pack(pady=5)
 
-    # Tabla
+    # Tabla q muestra los Clientes
     tabla = ttk.Treeview(
         ventana,
         columns=("dni", "Nombre", "Telefono", "Email"),
