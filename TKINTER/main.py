@@ -95,7 +95,7 @@ def pantalla_inicio(contenedor):
 
     tabla = ttk.Treeview(
         recuadro,
-        columns=("Id Reserva","Cliente", "Dni", "Cancha", "Fecha", "Hora Inicio", "Hora Fin", "Estado"),
+        columns=("id Reserva","Cliente", "Dni", "Cancha", "Fecha", "Hora Inicio", "Hora Fin", "Estado"),
         show="headings"
     )
 
@@ -107,7 +107,7 @@ def pantalla_inicio(contenedor):
 #        anchor="s"  # abajo
 #stretch es para evitar que Tkinter agrande las columnas automaticamente
 
-    tabla.heading("Id Reserva", text="Id Reserva")
+    tabla.heading("id Reserva", text="ID Reserva")
     tabla.heading("Cliente", text="Cliente")
     tabla.heading("Dni", text="Dni")
     tabla.heading("Cancha", text="Cancha")
@@ -116,7 +116,7 @@ def pantalla_inicio(contenedor):
     tabla.heading("Hora Fin", text="Hora Fin")
     tabla.heading("Estado", text="Estado")
 
-    tabla.column("Id Reserva", width=80, anchor="center", stretch=True)
+    tabla.column("id Reserva", width=80, anchor="center", stretch=True)
     tabla.column("Cliente", width=240, anchor="center", stretch=True)
     tabla.column("Dni", width=100, anchor="center", stretch=True)
     tabla.column("Cancha", width=120, anchor="center", stretch=True)
@@ -134,7 +134,7 @@ def pantalla_inicio(contenedor):
         for formato in formatos_fecha:
             try:
                 es_hoy = datetime.strptime(
-                    reserva["Fecha"], formato
+                    reserva["fecha"], formato
                 ).date() == datetime.now().date()
                 break
             except ValueError:

@@ -1,6 +1,6 @@
+from datetime import datetime
 import tkinter as tk
-from tkinter import ttk, messagebox
-
+from tkinter import messagebox, ttk
 
 reservas = []
 
@@ -12,9 +12,7 @@ def ventana_reservas(parent=None):
         ventana.geometry("1280x720")
 
     titulo = tk.Label(
-        ventana,
-        text="GESTIÓN DE RESERVAS",
-        font=("Arial", 20)
+        ventana, text="GESTIÓN DE RESERVAS", font=("Arial", 20)
     )
     titulo.pack(pady=20)
 
@@ -44,7 +42,7 @@ def ventana_reservas(parent=None):
     entrada_cancha = tk.Entry(formulario)
     entrada_cancha.grid(row=2, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Fecha:").grid(
+    tk.Label(formulario, text="Fecha (AAAA-MM-DD):").grid(
         row=3, column=0, padx=10, pady=5
     )
     entrada_fecha = tk.Entry(formulario)
@@ -68,7 +66,7 @@ def ventana_reservas(parent=None):
     entrada_estado = ttk.Combobox(
         formulario,
         values=["Confirmada", "Pendiente", "Cancelada"],
-        state="readonly"
+        state="readonly",
     )
     entrada_estado.grid(row=6, column=1, padx=10, pady=5)
     entrada_estado.set("Pendiente")
@@ -98,8 +96,8 @@ def ventana_reservas(parent=None):
                     reserva["fecha"],
                     reserva["inicio"],
                     reserva["fin"],
-                    reserva["estado"]
-                )
+                    reserva["estado"],
+                ),
             )
 
     def convertir_hora(hora):
@@ -108,6 +106,14 @@ def ventana_reservas(parent=None):
             return int(horas) * 60 + int(minutos)
         except ValueError:
             return None
+
+    def validar_fecha(fecha_str):
+        try:
+            # Valida el formato YYYY-MM-DD y que sea una fecha real
+            datetime.strptime(fecha_str, "%Y-%m-%d")
+            return True
+        except ValueError:
+            return False
 
     def existe_superposicion(cancha, fecha, inicio, fin):
         inicio_nuevo = convertir_hora(inicio)
@@ -124,7 +130,10 @@ def ventana_reservas(parent=None):
                 inicio_existente = convertir_hora(reserva["inicio"])
                 fin_existente = convertir_hora(reserva["fin"])
 
-                if inicio_nuevo < fin_existente and fin_nuevo > inicio_existente:
+                if (
+                    inicio_nuevo < fin_existente
+                    and fin_nuevo > inicio_existente
+                ):
                     return True
 
         return False
@@ -147,8 +156,15 @@ def ventana_reservas(parent=None):
             or fin == ""
         ):
             messagebox.showwarning(
-                "Datos incompletos",
-                "Complete todos los campos obligatorios."
+                "Datos incompletos", "Complete todos los campos obligatorios."
+            )
+            return
+
+        # Validacion estricta del formato de fecha
+        if not validar_fecha(fecha):
+            messagebox.showerror(
+                "Error de formato",
+                "La fecha debe tener el formato AAAA-MM-DD (ej: 2026-09-25).",
             )
             return
 
@@ -157,23 +173,21 @@ def ventana_reservas(parent=None):
 
         if inicio_nuevo is None or fin_nuevo is None:
             messagebox.showerror(
-                "Error",
-                "Las horas deben tener el formato HH:MM."
+                "Error", "Las horas deben tener el formato HH:MM."
             )
             return
 
         if inicio_nuevo >= fin_nuevo:
             messagebox.showerror(
                 "Error",
-                "La hora de inicio debe ser menor que la hora de fin."
+                "La hora de inicio debe ser menor que la hora de fin.",
             )
             return
 
         for reserva in reservas:
             if reserva["id"] == id_reserva:
                 messagebox.showerror(
-                    "Error",
-                    "Ya existe una reserva con ese ID."
+                    "Error", "Ya existe una reserva con ese ID."
                 )
                 return
 
@@ -181,7 +195,7 @@ def ventana_reservas(parent=None):
             if existe_superposicion(cancha, fecha, inicio, fin):
                 messagebox.showerror(
                     "Cancha ocupada",
-                    "La cancha ya tiene una reserva en ese horario."
+                    "La cancha ya tiene una reserva en ese horario.",
                 )
                 return
 
@@ -192,16 +206,13 @@ def ventana_reservas(parent=None):
             "fecha": fecha,
             "inicio": inicio,
             "fin": fin,
-            "estado": estado
+            "estado": estado,
         })
 
         actualizar_tabla()
         limpiar()
 
-        messagebox.showinfo(
-            "Reserva",
-            "Reserva guardada correctamente."
-        )
+        messagebox.showinfo("Reserva", "Reserva guardada correctamente.")
 
     def buscar():
         id_reserva = entrada_id.get()
@@ -226,52 +237,40 @@ def ventana_reservas(parent=None):
                 entrada_estado.set(reserva["estado"])
                 return
 
-        messagebox.showinfo(
-            "Buscar",
-            "No se encontró la reserva."
-        )
+        messagebox.showinfo("Buscar", "No se encontró la reserva.")
 
     # Bloque de botones, al lado del formulario, uno debajo del otro
     botones = tk.Frame(contenedor_superior)
     botones.pack(side="left", anchor="n", padx=10)
 
     tk.Button(
-        botones,
-        text="Nuevo",
-        command=limpiar,
-        width=12
+        botones, text="Nuevo", command=limpiar, width=12
     ).pack(pady=5)
 
     tk.Button(
-        botones,
-        text="Guardar",
-        command=guardar,
-        width=12
+        botones, text="Guardar", command=guardar, width=12
     ).pack(pady=5)
 
     tk.Button(
-        botones,
-        text="Buscar",
-        command=buscar,
-        width=12
+        botones, text="Buscar", command=buscar, width=12
     ).pack(pady=5)
 
     # Tabla
     tabla = ttk.Treeview(
         ventana,
         columns=(
-            "ID",
+            "id",
             "Cliente",
             "Cancha",
             "Fecha",
             "Inicio",
             "Fin",
-            "Estado"
+            "Estado",
         ),
-        show="headings"
+        show="headings",
     )
 
-    tabla.heading("ID", text="ID Reserva")
+    tabla.heading("id", text="ID Reserva")
     tabla.heading("Cliente", text="Cliente")
     tabla.heading("Cancha", text="Cancha")
     tabla.heading("Fecha", text="Fecha")
@@ -279,7 +278,7 @@ def ventana_reservas(parent=None):
     tabla.heading("Fin", text="Hora Fin")
     tabla.heading("Estado", text="Estado")
 
-    tabla.column("ID", width=100)
+    tabla.column("id", width=100)
     tabla.column("Cliente", width=150)
     tabla.column("Cancha", width=100)
     tabla.column("Fecha", width=100)
@@ -287,11 +286,6 @@ def ventana_reservas(parent=None):
     tabla.column("Fin", width=100)
     tabla.column("Estado", width=100)
 
-    tabla.pack(
-        fill="both",
-        expand=True,
-        padx=20,
-        pady=20
-    )
+    tabla.pack(fill="both", expand=True, padx=20, pady=20)
 
     actualizar_tabla()
