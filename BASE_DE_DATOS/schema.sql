@@ -9,16 +9,16 @@ CREATE TABLE canchas (
     tipo_deporte VARCHAR(20) NOT NULL,
     capacidad INTEGER NOT NULL,
     precio_hora REAL NOT NULL,
-    estado VARCHAR(20) NOT NULL CHECK
+    estado VARCHAR(20) NOT NULL CHECK(estado IN ('Activa', 'Inactiva'))
 );
 CREATE TABLE reservas (
     id_reserva INTEGER PRIMARY KEY AUTOINCREMENT,
     dni_cliente INTEGER NOT NULL,
     id_cancha INTEGER NOT NULL,
-    fecha DATETIME NOT NULL,
+    fecha DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fin TIME NOT NULL,
-    estado_reserva VARCHAR(20) NOT NULL CHECK,
+    estado_reserva VARCHAR(20) NOT NULL CHECK(estado_reserva IN ('Confirmada', 'Pendiente', 'Cancelada')),
 
     FOREIGN KEY (dni_cliente) REFERENCES clientes(dni),
     FOREIGN KEY (id_cancha) REFERENCES canchas(id_cancha)
