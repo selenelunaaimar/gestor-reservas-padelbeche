@@ -2,56 +2,71 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import re
 
-clientes = []
+clientes = [
+    {
+         "dni": "12345678",
+         "nombre_apellido": "Juan Perez",
+         "telefono": "3511234567",
+         "email": "juan.perez@gmail.com"
+     }
+]
 
 def ventana_clientes(parent=None):
+    # Se unificó el manejo de la ventana principal, manteniendo la compatibilidad tanto si se abre independiente como en solapas
     ventana = parent or tk.Toplevel()
     if parent is None:
         ventana.title("Gestión de Clientes")
         ventana.geometry("1280x720")
 
+    # Título principal
     titulo = tk.Label(
         ventana,
-        text="GESTIÓN DE CLIENTES",
-        font=("Arial", 20)
+        text="Gestión de Clientes",
+        font=("Arial", 20, "bold")
     )
-    titulo.pack(pady=20)
+    titulo.pack(pady=(15, 10))
 
-    # Contenedor superior (contiene formulario y botones)
-    contenedor_superior = tk.LabelFrame(ventana)
-    contenedor_superior.pack(anchor="w", padx=20, pady=10)
+    # Contenedor principal que divide en dos columnas
+    contenedor = tk.Frame(ventana)
+    contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    # Formulario
-    formulario = tk.Frame(contenedor_superior)
-    formulario.pack(side="left", padx=(0, 20))
+    # ==================== PANEL IZQUIERDO: TABLA ====================
+    panel_izq = tk.Frame(contenedor, padx=5, pady=5)
+    panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-    # Título dentro de formulario
-    tk.Label(
-        formulario,
-        text="👤 CLIENTES",
-        font=("Arial", 12, "bold")
-    ).grid(row=0, column=0, columnspan=4, sticky="w", padx=10, pady=(0, 10))
+    # Tabla que muestra los Clientes
+    columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email")
+    tabla = ttk.Treeview(panel_izq, columns=columnas, show="headings")
+    for col in columnas:
+        tabla.heading(col, text=col)
+        tabla.column(col, width=150)
+    tabla.pack(fill=tk.BOTH, expand=True)
 
-    tk.Label(formulario, text="DNI:").grid(row=1, column=0, padx=10, pady=5, sticky="w")
-    entrada_dni = tk.Entry(formulario)
-    entrada_dni.grid(row=1, column=1, padx=10, pady=5)
+    # ==================== PANEL DERECHO: FORMULARIO Y BOTONES ====================
+    panel_der = tk.Frame(contenedor, padx=10, pady=5)
+    panel_der.pack(side=tk.RIGHT, fill=tk.Y)
 
-    tk.Label(formulario, text="Nombre y apellido:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
-    entrada_nombre = tk.Entry(formulario)
-    entrada_nombre.grid(row=2, column=1, padx=10, pady=5)
+    # Campos del formulario con diseño vertical apilado
+    tk.Label(panel_der, text="DNI:").pack(anchor="w")
+    entrada_dni = tk.Entry(panel_der, width=30)
+    entrada_dni.pack(fill=tk.X, pady=2)
 
-    tk.Label(formulario, text="Teléfono:").grid(row=1, column=2, padx=10, pady=5, sticky="w")
-    entrada_telefono = tk.Entry(formulario)
-    entrada_telefono.grid(row=1, column=3, padx=10, pady=5)
+    tk.Label(panel_der, text="Nombre y apellido:").pack(anchor="w")
+    entrada_nombre_apellido = tk.Entry(panel_der, width=30)
+    entrada_nombre_apellido.pack(fill=tk.X, pady=2)
 
-    tk.Label(formulario, text="Email:").grid(row=2, column=2, padx=10, pady=5, sticky="w")
-    entrada_email = tk.Entry(formulario)
-    entrada_email.grid(row=2, column=3, padx=10, pady=5)
+    tk.Label(panel_der, text="Teléfono:").pack(anchor="w")
+    entrada_telefono = tk.Entry(panel_der, width=30)
+    entrada_telefono.pack(fill=tk.X, pady=2)
+
+    tk.Label(panel_der, text="Email:").pack(anchor="w")
+    entrada_email = tk.Entry(panel_der, width=30)
+    entrada_email.pack(fill=tk.X, pady=2)
 
     # Funciones internas
-    def limpiar(): #limpia los campos del formulario
+    def limpiar(): # Limpia los campos del formulario
         entrada_dni.delete(0, tk.END)
-        entrada_nombre.delete(0, tk.END)
+        entrada_nombre_apellido.delete(0, tk.END)
         entrada_telefono.delete(0, tk.END)
         entrada_email.delete(0, tk.END)
 
@@ -65,83 +80,83 @@ def ventana_clientes(parent=None):
                 tk.END,
                 values=(
                     cliente["dni"],
-                    cliente["nombre"],
+                    cliente["nombre_apellido"],
                     cliente["telefono"],
                     cliente["email"]
                 )
             )
 
     def guardar():
-        dni = entrada_dni.get().strip() #.strip elimina espacios
-        nombre = entrada_nombre.get().strip()
+        dni = entrada_dni.get().strip() # .strip elimina espacios
+        nombre_apellido = entrada_nombre_apellido.get().strip()
         telefono = entrada_telefono.get().strip()
         email = entrada_email.get().strip()
-        patron_email=r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        patron_email = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
-        if not dni and not nombre and not telefono and not email: #valida q no haya ningun campo sin dato
+        if not dni and not nombre_apellido and not telefono and not email: # Valida que no haya ningún campo sin dato
             messagebox.showerror(
                 "Datos incompletos",
                 "Debe completar los datos del cliente."
             )
             return 
         
-        if not dni: #valida dni oblig
+        if not dni: # Valida DNI obligatorio
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar DNI"
             )
             return
 
-        if not nombre: #valida nom oblig
+        if not nombre_apellido: # Valida nombre obligatorio
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar nombre y apellido."
             )
             return
 
-        if not telefono: #valida tel oblig
+        if not telefono: # Valida teléfono obligatorio
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar el teléfono."
             )
             return
         
-        if not email: #valida email oblig
+        if not email: # Valida email obligatorio
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar email."
             )
             return
 
-        if not dni.isdigit(): #valida q DNI sean nros
+        if not dni.isdigit(): # Valida que DNI sean números
             messagebox.showerror(
                 "Error",
                 "El DNI debe contener sólo números."
             )
             return
 
-        if len(dni) < 7 or len(dni) > 8: #valida la long del DNI
+        if len(dni) < 7 or len(dni) > 8: # Valida la longitud del DNI
             messagebox.showerror(
                 "Error",
                 "El DNI debe tener entre 7 y 8 dígitos."
             )
             return
         
-        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+", nombre): #valida nom sólo letras
-                messagebox.showerror(
-                    "Error",
-                    "Ingrese un nombre válido."
-                )
-                return
+        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+", nombre_apellido): # Valida nombre sólo letras
+            messagebox.showerror(
+                "Error",
+                "Ingrese un nombre válido."
+            )
+            return
         
-        if len(nombre) < 3: #valida long nom y apel
+        if len(nombre_apellido) < 3: # Valida longitud de nombre y apellido
             messagebox.showerror(
                 "Error",
                 "El nombre debe tener al menos 3 caracteres."
             )
             return
         
-        if not telefono.isdigit(): #valida tel sean nros
+        if not telefono.isdigit(): # Valida teléfono sean números
             messagebox.showerror(
                 "Error",
                 "El teléfono debe contener sólo números."
@@ -155,14 +170,14 @@ def ventana_clientes(parent=None):
             )
             return
         
-        if not re.match(patron_email, email): #valida email
+        if not re.match(patron_email, email): # Valida email
             messagebox.showerror(
                 "Error",
                 "Debe ingresar un mail válido."
             )
             return
         
-        for cliente in clientes: #valida dni dupli
+        for cliente in clientes: # Valida DNI duplicado
             if cliente["dni"] == dni:
                 messagebox.showerror(
                     "Error",
@@ -172,30 +187,74 @@ def ventana_clientes(parent=None):
 
         clientes.append({
             "dni": dni,
-            "nombre": nombre,
+            "nombre_apellido": nombre_apellido,
             "telefono": telefono,
             "email": email
         })
 
         actualizar_tabla()
         limpiar()
-
         messagebox.showinfo("Cliente", "Cliente guardado correctamente.")
 
-    def buscar(): #busca registro por dni y lo muestra en el formulario del dict [clientes]
-        dni = entrada_dni.get()
+    def modificar():
+        dni = entrada_dni.get().strip()
+        nombre_apellido = entrada_nombre_apellido.get().strip()
+        telefono = entrada_telefono.get().strip()
+        email = entrada_email.get().strip()
+        patron_email = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+
+        if not dni:
+            messagebox.showwarning("Atención", "Ingrese o seleccione el DNI del cliente a modificar.")
+            return
+
+        if not nombre_apellido or not telefono or not email:
+            messagebox.showwarning("Datos incompletos", "Todos los campos deben estar completos para modificar.")
+            return
+
+        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+", nombre_apellido) or len(nombre_apellido) < 3:
+            messagebox.showerror("Error", "Ingrese un nombre y apellido válido (mínimo 3 letras).")
+            return
+
+        if not telefono.isdigit() or len(telefono) < 8 or len(telefono) > 15:
+            messagebox.showerror("Error", "El teléfono debe contener sólo números (entre 8 y 15 dígitos).")
+            return
+
+        if not re.match(patron_email, email):
+            messagebox.showerror("Error", "Debe ingresar un mail válido.")
+            return
+
+        cliente_encontrado = False
+        for cliente in clientes:
+            if cliente["dni"] == dni:
+                cliente["nombre_apellido"] = nombre_apellido
+                cliente["telefono"] = telefono
+                cliente["email"] = email
+                cliente_encontrado = True
+                break
+
+        if cliente_encontrado:
+            actualizar_tabla()
+            limpiar()
+            messagebox.showinfo("Éxito", "Cliente modificado correctamente.")
+        else:
+            messagebox.showwarning("Modificar", "No se encontró un cliente registrado con ese DNI.")
+
+    def buscar(): # Busca registro por DNI y lo muestra en el formulario
+        dni = entrada_dni.get().strip()
+        if not dni:
+            messagebox.showwarning("Buscar", "Ingrese un DNI para buscar.")
+            return
 
         for cliente in clientes:
             if cliente["dni"] == dni:
-                entrada_nombre.delete(0, tk.END)
-                entrada_nombre.insert(0, cliente["nombre"])
+                entrada_nombre_apellido.delete(0, tk.END)
+                entrada_nombre_apellido.insert(0, cliente["nombre_apellido"])
 
                 entrada_telefono.delete(0, tk.END)
                 entrada_telefono.insert(0, cliente["telefono"])
 
                 entrada_email.delete(0, tk.END)
                 entrada_email.insert(0, cliente["email"])
-
                 return
 
         messagebox.showinfo(
@@ -212,7 +271,7 @@ def ventana_clientes(parent=None):
             )
             return
 
-        item=tabla.item(seleccion[0])
+        item = tabla.item(seleccion[0])
         dni = str(item["values"][0])
 
         if not messagebox.askyesno(
@@ -221,73 +280,74 @@ def ventana_clientes(parent=None):
         ):
             return
 
-        # for cliente in clientes:
-        #     if str(cliente["dni"]) == str(dni):
-        #         clientes.remove(cliente)
-        #         break
-
-        clientes[:] = [
+        global clientes
+        clientes = [
             cliente
             for cliente in clientes
             if str(cliente["dni"]) != str(dni)
         ]
         
         actualizar_tabla()
+        limpiar()
+        messagebox.showinfo("Eliminar", "Cliente eliminado correctamente.")
 
-        messagebox.showinfo("Eliminar", "Cliente eliminado correctamente."
-        )
-    #fin eliminar()
-    
+    def seleccionar_tabla(event):
+        seleccion = tabla.selection()
+        if seleccion:
+            item = tabla.item(seleccion[0])
+            valores = item["values"]
+            limpiar()
+            entrada_dni.insert(0, valores[0])
+            entrada_nombre_apellido.insert(0, valores[1])
+            entrada_telefono.insert(0, valores[2])
+            entrada_email.insert(0, valores[3])
 
-    # Bloque de botones (al lado del formulario)
-    botones = tk.Frame(contenedor_superior)
-    botones.pack(side="left", anchor="n", padx=10)
+    # Vinculación del evento de selección en la tabla
+    tabla.bind("<<TreeviewSelect>>", seleccionar_tabla)
 
-    tk.Button(
-        botones,
-        text="Limpiar",
-        command=limpiar,
-        width=12
-    ).pack(pady=5)
+    # Bloque de botones
+    botones = tk.Frame(panel_der, pady=10)
+    botones.pack(fill=tk.X)
 
     tk.Button(
         botones,
         text="Guardar",
         command=guardar,
-        width=12
-    ).pack(pady=5)
+        width=15
+    ).pack(pady=2)
+
+    tk.Button(
+        botones,
+        text="Modificar",
+        command=modificar,
+        width=15
+    ).pack(pady=2)
 
     tk.Button(
         botones,
         text="Buscar",
         command=buscar,
-        width=12
-    ).pack(pady=5)
+        width=15
+    ).pack(pady=2)
 
     tk.Button(
         botones,
         text="Eliminar",
         command=eliminar,
-        width=12
-    ).pack(pady=5)
+        width=15
+    ).pack(pady=2)
 
-    # Tabla q muestra los Clientes
-    tabla = ttk.Treeview(
-        ventana,
-        columns=("dni", "Nombre", "Telefono", "Email"),
-        show="headings"
-    )
+    tk.Button(
+        botones,
+        text="Limpiar",
+        command=limpiar,
+        width=15
+    ).pack(pady=2)
 
-    tabla.heading("dni", text="DNI")
-    tabla.heading("Nombre", text="Nombre y apellido")
-    tabla.heading("Telefono", text="Teléfono")
-    tabla.heading("Email", text="Email")
-
-    tabla.column("dni", width=150)
-    tabla.column("Nombre", width=300)
-    tabla.column("Telefono", width=200)
-    tabla.column("Email", width=300)
-
-    tabla.pack(fill="both", expand=True, padx=20, pady=20)
-
+    # Carga inicial de datos en la tabla
     actualizar_tabla()
+
+    # Si se pasa un contenedor padre, empaqueta y retorna la ventana principal
+    if parent is not None:
+        ventana.pack(fill=tk.BOTH, expand=True)
+    return ventana

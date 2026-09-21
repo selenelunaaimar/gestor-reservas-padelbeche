@@ -8,57 +8,74 @@ def ventana_canchas(parent=None):
     if parent is None:
         ventana.title("Gestión de Canchas")
         ventana.geometry("1280x720")
+        ventana.configure(bg="#f0f0f0")
 
+    # Título principal de la ventana
     titulo = tk.Label(
-        ventana, text="GESTIÓN DE CANCHAS", font=("Arial", 20)
+        ventana, text="Gestión de Canchas", font=("Arial", 20, "bold"), bg="#f0f0f0"
     )
-    titulo.pack(pady=20)
+    titulo.pack(pady=(15, 10))
 
-    # Contenedor superior (contiene formulario y botones)
-    contenedor_superior = tk.LabelFrame(ventana)
-    contenedor_superior.pack(anchor="w", padx=20, pady=10)
+    # Contenedor principal que divide la tabla y el panel derecho
+    contenedor = tk.Frame(ventana, bg="#f0f0f0")
+    contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    # Formulario
-    formulario = tk.Frame(contenedor_superior)
-    formulario.pack(side="left", padx=(0, 20))
+    # Panel Izquierdo
+    panel_izq = tk.Frame(contenedor, padx=5, pady=5, bg="#f0f0f0")
+    panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-    tk.Label(formulario, text="ID Cancha:").grid(
-        row=0, column=0, padx=10, pady=5, sticky="w"
+    tabla = ttk.Treeview(
+        panel_izq,
+        columns=("id", "Capacidad", "Tipo", "Precio", "Estado"),
+        show="headings",
     )
-    entrada_id = tk.Entry(formulario)
-    entrada_id.grid(row=0, column=1, padx=10, pady=5)
 
-    tk.Label(formulario, text="Capacidad:").grid(
-        row=1, column=0, padx=10, pady=5, sticky="w"
-    )
-    entrada_capacidad = tk.Entry(formulario)
-    entrada_capacidad.grid(row=1, column=1, padx=10, pady=5)
+    tabla.heading("id", text="ID Cancha")
+    tabla.heading("Capacidad", text="Capacidad")
+    tabla.heading("Tipo", text="Tipo")
+    tabla.heading("Precio", text="Precio/Hora")
+    tabla.heading("Estado", text="Estado")
 
-    tk.Label(formulario, text="Tipo:").grid(
-        row=2, column=0, padx=10, pady=5, sticky="w"
-    )
+    tabla.column("id", width=100)
+    tabla.column("Capacidad", width=100)
+    tabla.column("Tipo", width=120)
+    tabla.column("Precio", width=100)
+    tabla.column("Estado", width=100)
+
+    tabla.pack(fill=tk.BOTH, expand=True)
+
+    # Panel Derecho
+    panel_der = tk.Frame(contenedor, padx=5, pady=5, bg="#f0f0f0")
+    panel_der.pack(side=tk.RIGHT, fill=tk.Y)
+
+    tk.Label(panel_der, text="ID Cancha:", bg="#f0f0f0").pack(anchor="w")
+    entrada_id = tk.Entry(panel_der)
+    entrada_id.pack(fill=tk.X, pady=2)
+
+    tk.Label(panel_der, text="Capacidad:", bg="#f0f0f0").pack(anchor="w")
+    entrada_capacidad = tk.Entry(panel_der)
+    entrada_capacidad.pack(fill=tk.X, pady=2)
+
+    tk.Label(panel_der, text="Tipo:", bg="#f0f0f0").pack(anchor="w")
     entrada_tipo = ttk.Combobox(
-        formulario, values=["Pádel", "Fútbol"], state="readonly"
+        panel_der, values=["Pádel", "Fútbol"], state="readonly"
     )
-    entrada_tipo.grid(row=2, column=1, padx=10, pady=5)
+    entrada_tipo.pack(fill=tk.X, pady=2)
 
-    tk.Label(formulario, text="Precio por hora:").grid(
-        row=3, column=0, padx=10, pady=5, sticky="w"
-    )
-    entrada_precio = tk.Entry(formulario)
-    entrada_precio.grid(row=3, column=1, padx=10, pady=5)
+    tk.Label(panel_der, text="Precio por hora:", bg="#f0f0f0").pack(anchor="w")
+    entrada_precio = tk.Entry(panel_der)
+    entrada_precio.pack(fill=tk.X, pady=2)
 
-    tk.Label(formulario, text="Estado:").grid(
-        row=4, column=0, padx=10, pady=5, sticky="w"
-    )
+    tk.Label(panel_der, text="Estado:", bg="#f0f0f0").pack(anchor="w")
     entrada_estado = ttk.Combobox(
-        formulario, values=["Activa", "Inactiva"], state="readonly"
+        panel_der, values=["Activa", "Inactiva"], state="readonly"
     )
-    entrada_estado.grid(row=4, column=1, padx=10, pady=5)
+    entrada_estado.pack(fill=tk.X, pady=2)
     entrada_estado.set("Activa")
 
     # Funciones internas
     def limpiar():
+        entrada_id.config(state="normal") # Permitir limpiar y editar el ID para nuevas altas
         entrada_id.delete(0, tk.END)
         entrada_capacidad.delete(0, tk.END)
         entrada_tipo.set("")
@@ -89,19 +106,17 @@ def ventana_canchas(parent=None):
         precio = entrada_precio.get().strip()
         estado = entrada_estado.get()
 
-        #capacidad_num=int(capacidad) #para validar q sea !=0
-        precio=precio.replace(",", ".") #reemplazar coma por punto
+        precio = precio.replace(",", ".") #reemplazar coma por punto
 
         # Validacion para que todos los campos sean obligatorios
         if not id_cancha or not capacidad or not tipo or not precio or not estado:
             messagebox.showwarning("Datos incompletos", "Todos los campos son obligatorios.")
             return
 
-        
         if not id_cancha.isdigit(): #validar id sea integer
             messagebox.showerror(
                 "Error", 
-                "El ID de cancha de ser un número."
+                "El ID de cancha debe ser un número."
             )
             return
 
@@ -111,17 +126,17 @@ def ventana_canchas(parent=None):
                 "La capacidad debe ser un número."
             )
             return
-        capacidad_num=int(capacidad) #para validar q sea !=0
+        capacidad_num = int(capacidad) #para validar q sea !=0
 
         if capacidad_num <= 0: #validar sea != 0
             messagebox.showerror(
                 "Error",
-                "La capacidad deber ser mayor a cero."
+                "La capacidad debe ser mayor a cero."
             )
             return
         
         try:                    #precio_hora admite decimales
-            precio_num= float(precio)
+            precio_num = float(precio)
         except ValueError:
             messagebox.showerror(
                 "Error",
@@ -129,7 +144,7 @@ def ventana_canchas(parent=None):
             )
             return
         
-        if precio_num <=0:
+        if precio_num <= 0:
             messagebox.showerror(
                 "Error",
                 "El precio debe ser mayor a cero."
@@ -143,7 +158,7 @@ def ventana_canchas(parent=None):
                 )
                 return
 
-        canchas.append({ #guardar datos e
+        canchas.append({ #guardar datos
             "id": id_cancha,
             "capacidad": capacidad_num,
             "tipo": tipo,
@@ -156,8 +171,64 @@ def ventana_canchas(parent=None):
 
         messagebox.showinfo("Cancha", "Cancha guardada correctamente.")
 
+    def modificar():
+        id_cancha = entrada_id.get().strip()
+        capacidad = entrada_capacidad.get().strip()
+        tipo = entrada_tipo.get()
+        precio = entrada_precio.get().strip()
+        estado = entrada_estado.get()
+
+        if not id_cancha:
+            messagebox.showwarning("Atención", "Seleccione o ingrese el ID de la cancha a modificar.")
+            return
+
+        precio = precio.replace(",", ".")
+
+        # Validaciones de campos obligatorios y formatos
+        if not capacidad or not tipo or not precio or not estado:
+            messagebox.showwarning("Datos incompletos", "Todos los campos son obligatorios.")
+            return
+
+        if not capacidad.isdigit():
+            messagebox.showerror("Error", "La capacidad debe ser un número.")
+            return
+        capacidad_num = int(capacidad)
+
+        if capacidad_num <= 0:
+            messagebox.showerror("Error", "La capacidad debe ser mayor a cero.")
+            return
+        
+        try:
+            precio_num = float(precio)
+        except ValueError:
+            messagebox.showerror("Error", "El precio debe ser un número válido.")
+            return
+        
+        if precio_num <= 0:
+            messagebox.showerror("Error", "El precio debe ser mayor a cero.")
+            return
+
+        # Buscar y actualizar la cancha existente
+        encontrada = False
+        for cancha in canchas:
+            if cancha["id"] == id_cancha:
+                cancha["capacidad"] = capacidad_num
+                cancha["tipo"] = tipo
+                cancha["precio"] = precio_num
+                cancha["estado"] = estado
+                encontrada = True
+                break
+
+        if not encontrada:
+            messagebox.showerror("Error", "No se encontró una cancha con ese ID.")
+            return
+
+        actualizar_tabla()
+        limpiar()
+        messagebox.showinfo("Éxito", "Cancha modificada correctamente.")
+
     def buscar():
-        id_cancha = entrada_id.get()
+        id_cancha = entrada_id.get().strip()
 
         for cancha in canchas:
             if cancha["id"] == id_cancha:
@@ -177,43 +248,50 @@ def ventana_canchas(parent=None):
             "Buscar", "No se encontró una cancha con ese ID."
         )
 
-    # Bloque de botones
-    botones = tk.Frame(contenedor_superior)
-    botones.pack(side="left", anchor="n", padx=10)
+    # Función para autorrellenar los campos al hacer clic en la tabla
+    def seleccionar_registro(event):
+        seleccion = tabla.selection()
+        if seleccion:
+            item = tabla.item(seleccion)
+            valores = item["values"]
+            if valores:
+                # Limpiamos y rellenamos los campos con los valores de la fila seleccionada
+                limpiar()
+                entrada_id.insert(0, str(valores[0]))
+                entrada_id.config(state="disabled") # Bloquear ID para que no se altere la clave primaria al modificar
+                
+                entrada_capacidad.insert(0, str(valores[1]))
+                entrada_tipo.set(str(valores[2]))
+                entrada_precio.insert(0, str(valores[3]))
+                entrada_estado.set(str(valores[4]))
 
-    tk.Button(
-        botones, text="Limpiar", command=limpiar, width=12
-    ).pack(pady=5)
+    # Vincular el evento de selección de la tabla
+    tabla.bind("<<TreeviewSelect>>", seleccionar_registro)
+
+    # Bloque de botones
+    botones = tk.Frame(panel_der, pady=10, bg="#f0f0f0")
+    botones.pack(fill=tk.X)
 
     tk.Button(
         botones, text="Guardar", command=guardar, width=12
-    ).pack(pady=5)
+    ).pack(pady=2)
+
+    tk.Button(
+        botones, text="Modificar", command=modificar, width=12
+    ).pack(pady=2)
 
     tk.Button(
         botones, text="Buscar", command=buscar, width=12
-    ).pack(pady=5)
+    ).pack(pady=2)
 
-    # Tabla
-    tabla = ttk.Treeview(
-        ventana,
-        columns=("id", "Capacidad", "Tipo", "Precio", "Estado"),
-        show="headings",
-    )
-
-    tabla.heading("id", text="ID Cancha")
-    tabla.heading("Capacidad", text="Capacidad")
-    tabla.heading("Tipo", text="Tipo")
-    tabla.heading("Precio", text="Precio/Hora")
-    tabla.heading("Estado", text="Estado")
-
-    tabla.column("id", width=100)
-    tabla.column("Capacidad", width=100)
-    tabla.column("Tipo", width=120)
-    tabla.column("Precio", width=100)
-    tabla.column("Estado", width=100)
-
-    tabla.pack(fill="both", expand=True, padx=20, pady=20)
+    tk.Button(
+        botones, text="Limpiar", command=limpiar, width=12
+    ).pack(pady=2)
 
     limpiar()
     actualizar_tabla()
 
+    if parent is not None:
+        parent.configure(bg="#f0f0f0")
+        parent.pack(fill=tk.BOTH, expand=True)
+    return ventana

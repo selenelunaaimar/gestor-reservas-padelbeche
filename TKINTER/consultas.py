@@ -14,36 +14,64 @@ def ventana_consultas(parent=None):
 
     titulo = tk.Label(
         ventana,
-        text="CONSULTAS DE RESERVAS",
-        font=("Arial", 20)
+        text="Consultas de Reservas",
+        font=("Arial", 20, "bold")
     )
-    titulo.pack(pady=20)
+    titulo.pack(pady=(15, 10))
 
-    # Contenedor superior
-    contenedor_superior = tk.LabelFrame(ventana)
-    contenedor_superior.pack(anchor="w", padx=20, pady=10)
+    # Contenedor principal que divide la tabla y el panel derecho
+    contenedor = tk.Frame(ventana)
+    contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    # Filtros
-    filtros = tk.Frame(
-        contenedor_superior,
-        padx=10,
-        pady=10
-    )
-    filtros.pack(side="left", padx=(0, 20))
+    # Panel Izquierdo/Medio: Tabla de resultados
+    panel_izq = tk.Frame(contenedor, padx=5, pady=5)
+    panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     # ------------------------------------------------
-    # ICONO DE LUPA + TÍTULO
+    # TABLA DE RESULTADOS
     # ------------------------------------------------
 
-    encabezado_filtros = tk.Frame(filtros)
-    encabezado_filtros.grid(
-        row=0,
-        column=0,
-        columnspan=4,
-        sticky="w",
-        padx=5,
-        pady=(0, 5)
+    tabla = ttk.Treeview(
+        panel_izq,
+        columns=(
+            "Fecha",
+            "Cliente",
+            "DNI",
+            "Cancha",
+            "Tipo",
+            "Inicio",
+            "Fin",
+            "Estado"
+        ),
+        show="headings"
     )
+
+    tabla.heading("Fecha", text="Fecha")
+    tabla.heading("Cliente", text="Cliente")
+    tabla.heading("DNI", text="DNI")
+    tabla.heading("Cancha", text="Cancha")
+    tabla.heading("Tipo", text="Tipo")
+    tabla.heading("Inicio", text="Hora Inicio")
+    tabla.heading("Fin", text="Hora Fin")
+    tabla.heading("Estado", text="Estado")
+
+    tabla.column("Fecha", width=100)
+    tabla.column("Cliente", width=150)
+    tabla.column("DNI", width=100)
+    tabla.column("Cancha", width=80)
+    tabla.column("Tipo", width=80)
+    tabla.column("Inicio", width=100)
+    tabla.column("Fin", width=100)
+    tabla.column("Estado", width=100)
+
+    tabla.pack(fill=tk.BOTH, expand=True)
+
+    # Panel Derecho: Filtros y Botones
+    panel_der = tk.Frame(contenedor, padx=5, pady=5)
+    panel_der.pack(side=tk.RIGHT, fill=tk.Y)
+
+    encabezado_filtros = tk.Frame(panel_der)
+    encabezado_filtros.pack(fill=tk.X, pady=(0, 5))
 
     # Canvas para dibujar la lupa
     lupa = tk.Canvas(
@@ -79,49 +107,27 @@ def ventana_consultas(parent=None):
     # CAMPOS DE FILTRO
     # ------------------------------------------------
 
-    tk.Label(filtros, text="Desde:").grid(
-        row=1, column=0, padx=5, pady=5, sticky="w"
-    )
+    tk.Label(panel_der, text="Desde:").pack(anchor="w")
+    entrada_desde = tk.Entry(panel_der)
+    entrada_desde.pack(fill=tk.X, pady=2)
 
-    entrada_desde = tk.Entry(filtros, width=15)
-    entrada_desde.grid(
-        row=1, column=1, padx=5, pady=5
-    )
+    tk.Label(panel_der, text="Hasta:").pack(anchor="w")
+    entrada_hasta = tk.Entry(panel_der)
+    entrada_hasta.pack(fill=tk.X, pady=2)
 
-    tk.Label(filtros, text="Hasta:").grid(
-        row=1, column=2, padx=5, pady=5, sticky="w"
-    )
-
-    entrada_hasta = tk.Entry(filtros, width=15)
-    entrada_hasta.grid(
-        row=1, column=3, padx=5, pady=5
-    )
-
-    tk.Label(filtros, text="Cliente:").grid(
-        row=2, column=0, padx=5, pady=5, sticky="w"
-    )
-
+    tk.Label(panel_der, text="Cliente:").pack(anchor="w")
     entrada_cliente = ttk.Combobox(
-        filtros,
-        state="readonly",
-        width=20
+        panel_der,
+        state="readonly"
     )
-    entrada_cliente.grid(
-        row=2, column=1, padx=5, pady=5
-    )
+    entrada_cliente.pack(fill=tk.X, pady=2)
 
-    tk.Label(filtros, text="Cancha:").grid(
-        row=2, column=2, padx=5, pady=5, sticky="w"
-    )
-
+    tk.Label(panel_der, text="Cancha:").pack(anchor="w")
     entrada_cancha = ttk.Combobox(
-        filtros,
-        state="readonly",
-        width=20
+        panel_der,
+        state="readonly"
     )
-    entrada_cancha.grid(
-        row=2, column=3, padx=5, pady=5
-    )
+    entrada_cancha.pack(fill=tk.X, pady=2)
 
     # ------------------------------------------------
     # FUNCIONES INTERNAS
@@ -131,7 +137,7 @@ def ventana_consultas(parent=None):
         nombres_clientes = ["Todos"]
 
         for cliente in clientes:
-            nombres_clientes.append(cliente["nombre"])
+            nombres_clientes.append(cliente["nombre_apellido"])
 
         entrada_cliente["values"] = nombres_clientes
         entrada_cliente.set("Todos")
@@ -166,31 +172,33 @@ def ventana_consultas(parent=None):
             if hasta != "" and reserva["fecha"] > hasta:
                 continue
 
+            # Buscar nombre del cliente correspondiente a la reserva actual por su DNI (reserva["cliente"])
+            nombre_cliente_actual = ""
+            for cliente in clientes:
+                if str(cliente["dni"]) == str(reserva["cliente"]):
+                    nombre_cliente_actual = cliente["nombre_apellido"]
+                    break
+
             if (
                 cliente_filtro != "Todos"
                 and cliente_filtro != ""
-                and reserva["cliente"] != cliente_filtro
+                and nombre_cliente_actual != cliente_filtro
             ):
                 continue
 
             if (
                 cancha_filtro != "Todas"
                 and cancha_filtro != ""
-                and reserva["cancha"] != cancha_filtro
+                and str(reserva["cancha"]) != str(cancha_filtro)
             ):
                 continue
 
-            dni = ""
-
-            for cliente in clientes:
-                if cliente["nombre"] == reserva["cliente"]:
-                    dni = cliente["dni"]
-                    break
-
+            dni = reserva["cliente"]
             tipo = ""
 
+            # AQUÍ ESTABA EL CAMBIO: Se usa cancha["tipo"] para extraer el deporte correctamente
             for cancha in canchas:
-                if cancha["id"] == reserva["cancha"]:
+                if str(cancha["id"]) == str(reserva["cancha"]):
                     tipo = cancha["tipo"]
                     break
 
@@ -199,7 +207,7 @@ def ventana_consultas(parent=None):
                 tk.END,
                 values=(
                     reserva["fecha"],
-                    reserva["cliente"],
+                    nombre_cliente_actual,
                     dni,
                     reserva["cancha"],
                     tipo,
@@ -221,75 +229,25 @@ def ventana_consultas(parent=None):
     # BOTONES
     # ------------------------------------------------
 
-    botones = tk.Frame(contenedor_superior)
-    botones.pack(side="left", anchor="center", padx=10)
+    botones = tk.Frame(panel_der, pady=10)
+    botones.pack(fill=tk.X)
 
     tk.Button(
         botones,
         text="Buscar",
         command=buscar,
         width=12
-    ).pack(pady=5)
+    ).pack(pady=2)
 
     tk.Button(
         botones,
         text="Limpiar",
         command=limpiar_resultados,
         width=12
-    ).pack(pady=5)
-
-    # ------------------------------------------------
-    # TÍTULO RESULTADOS
-    # ------------------------------------------------
-
-    tk.Label(
-        ventana,
-        text="RESULTADOS",
-        font=("Arial", 14, "bold")
-    ).pack(anchor="w", padx=20, pady=(10, 0))
-
-    # ------------------------------------------------
-    # TABLA DE RESULTADOS
-    # ------------------------------------------------
-
-    tabla = ttk.Treeview(
-        ventana,
-        columns=(
-            "Fecha",
-            "Cliente",
-            "DNI",
-            "Cancha",
-            "Tipo",
-            "Inicio",
-            "Fin",
-            "Estado"
-        ),
-        show="headings"
-    )
-
-    tabla.heading("Fecha", text="Fecha")
-    tabla.heading("Cliente", text="Cliente")
-    tabla.heading("DNI", text="DNI")
-    tabla.heading("Cancha", text="Cancha")
-    tabla.heading("Tipo", text="Tipo")
-    tabla.heading("Inicio", text="Hora Inicio")
-    tabla.heading("Fin", text="Hora Fin")
-    tabla.heading("Estado", text="Estado")
-
-    tabla.column("Fecha", width=100)
-    tabla.column("Cliente", width=150)
-    tabla.column("DNI", width=100)
-    tabla.column("Cancha", width=80)
-    tabla.column("Tipo", width=80)
-    tabla.column("Inicio", width=100)
-    tabla.column("Fin", width=100)
-    tabla.column("Estado", width=100)
-
-    tabla.pack(
-        fill="both",
-        expand=True,
-        padx=20,
-        pady=20
-    )
+    ).pack(pady=2)
 
     cargar_filtros()
+
+    if parent is not None:
+        parent.pack(fill=tk.BOTH, expand=True)
+    return ventana

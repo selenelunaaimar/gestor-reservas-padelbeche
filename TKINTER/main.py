@@ -1,7 +1,7 @@
 from consultas import ventana_consultas 
 from reservas import reservas, ventana_reservas
 from canchas import ventana_canchas
-from clientes import ventana_clientes
+from clientes import clientes, ventana_clientes
 import tkinter as tk #importa la biblioteca gráfica Tkinter 
 from datetime import datetime #obtiene la fecha y hora actuales
 from tkinter import ttk
@@ -31,7 +31,7 @@ barra_navegacion = tk.Frame(ventana, bg=FONDO, width=220)
 barra_navegacion.pack(side="left", fill="y")
 barra_navegacion.pack_propagate(False)
 
-contenido = tk.Frame(ventana, bg=BLANCO)
+contenido = tk.Frame(ventana)
 contenido.pack(side="right", fill="both", expand=True)
 
 #padx agrega espacio horizontal dentro o alrededor de un elemento
@@ -140,19 +140,27 @@ def pantalla_inicio(contenedor):
             except ValueError:
                 continue
 
+
         if es_hoy:
+            # Buscamos el nombre y apellido del cliente usando la funcion de reservas o buscando en la lista de clientes
+            nombre_cliente = "Desconocido"
+            for c in clientes:
+                if str(c.get("dni")) == str(reserva["cliente"]):
+                    nombre_cliente = c.get("nombre_apellido", "Desconocido")
+                    break
+
             tabla.insert(
                 "",
                 tk.END,
                 values=(
-                    f'{reserva["inicio"]} - {reserva["fin"]}',
-                        reserva["id"],
-                        reserva["cliente"],
-                        reserva["cancha"],
-                        reserva["fecha"],
-                        reserva["inicio"],
-                        reserva["fin"],
-                        reserva["estado"]
+                    reserva["id"],          # ID Reserva
+                    nombre_cliente,         # Cliente (Nombre y Apellido)
+                    reserva["cliente"],     # Dni
+                    reserva["cancha"],      # Cancha
+                    reserva["fecha"],       # Fecha
+                    reserva["inicio"],      # Hora Inicio
+                    reserva["fin"],         # Hora Fin
+                    reserva["estado"]       # Estado
                 )
             )
 
