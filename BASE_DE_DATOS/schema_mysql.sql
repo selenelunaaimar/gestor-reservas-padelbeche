@@ -5,14 +5,12 @@ CREATE DATABASE IF NOT EXISTS padelbeche
 USE padelbeche;
 
 
-
 CREATE TABLE clientes (
     dni INT PRIMARY KEY,
     nombre_apellido VARCHAR(100) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
     email VARCHAR(100) NOT NULL
 ) ENGINE = InnoDB;
-
 
 
 CREATE TABLE canchas (
@@ -28,7 +26,6 @@ CREATE TABLE canchas (
     CONSTRAINT chk_canchas_precio
         CHECK (precio_hora > 0)
 ) ENGINE = InnoDB;
-
 
 
 CREATE TABLE reservas (
@@ -153,8 +150,9 @@ INSERT INTO reservas (
     fecha,
     hora_inicio,
     hora_fin,
-    estado_reserva
+    estado_reserva,
+    vence_pago
 ) VALUES
-('30111222', 1, '2026-09-18', '18:00', '19:00', 'Confirmada'),
-('35222333', 2, '2026-09-18', '19:00', '20:00', 'Pendiente'),
-('38444555', 1, '2026-09-19', '18:00', '19:00', 'Confirmada');
+('30111222', 1, '2026-09-18', '18:00', '19:00', 'Confirmada', NULL),
+('35222333', 2, '2026-09-18', '19:00', '20:00', 'Pendiente', '2026-09-18 18:30:00'),
+('38444555', 1, '2026-09-19', '18:00', '19:00', 'Confirmada', NULL);
