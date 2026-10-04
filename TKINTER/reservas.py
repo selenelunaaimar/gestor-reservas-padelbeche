@@ -177,7 +177,7 @@ def ventana_reservas(parent=None):
 
         for reserva in reservas:
             nombre_cliente = buscar_nombre_cliente(reserva["cliente"])
-            tabla.insert(
+            tabla.python -m pip install mysql-connector-python(
                 "",
                 tk.END,
                 values=(

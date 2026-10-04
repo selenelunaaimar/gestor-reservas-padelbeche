@@ -2,16 +2,14 @@
 
 ## Estado del desarrollo
 
-Este documento describe el diseño inicial de la base de datos del gestor de
-reservas PadelBeche. La estructura se encuentra definida en
-`BASE_DE_DATOS/schema.sql` y puede generarse mediante
-`BASE_DE_DATOS/database.py`.
+Este documento describe el esquema MySQL del gestor de reservas PadelBeche,
+definido en `BASE_DE_DATOS/schema_mysql.sql`.
 
 La base de datos se encuentra en una etapa inicial y todavía no está conectada
 con la interfaz gráfica. La aplicación utiliza listas temporales en memoria
 para probar el funcionamiento de las pantallas, los botones y las
-validaciones. La conexión entre Tkinter y SQLite será realizada en una etapa
-posterior.
+validaciones. La conexión MySQL está disponible en
+`BASE_DE_DATOS/database.py`, pero la interfaz todavía no la utiliza.
 
 ## Entidades
 
@@ -21,9 +19,9 @@ Almacena los datos de las personas que realizan reservas.
 
 | Campo | Tipo | Restricciones |
 |---|---|---|
-| `dni` | `INTEGER` | Clave primaria y obligatorio |
+| `dni` | `INT` | Clave primaria y obligatorio |
 | `nombre_apellido` | `VARCHAR(100)` | Obligatorio |
-| `telefono` | `INTEGER` | Obligatorio |
+| `telefono` | `VARCHAR(20)` | Obligatorio |
 | `email` | `VARCHAR(100)` | Obligatorio |
 
 ### Canchas
@@ -32,11 +30,11 @@ Almacena las canchas disponibles en el complejo deportivo.
 
 | Campo | Tipo | Restricciones |
 |---|---|---|
-| `id_cancha` | `INTEGER` | Clave primaria autoincremental |
+| `id_cancha` | `INT` | Clave primaria autoincremental |
 | `tipo_deporte` | `VARCHAR(20)` | Obligatorio |
-| `capacidad` | `INTEGER` | Obligatorio |
-| `precio_hora` | `REAL` | Obligatorio |
-| `estado` | `VARCHAR(20)` | `Activa` o `Inactiva` |
+| `capacidad` | `INT` | Obligatorio |
+| `precio_hora` | `DECIMAL(10,2)` | Obligatorio |
+| `estado` | `ENUM` | `Activa` o `Inactiva` |
 
 ### Reservas
 
@@ -44,13 +42,15 @@ Relaciona un cliente con una cancha en una fecha y horario determinados.
 
 | Campo | Tipo | Restricciones |
 |---|---|---|
-| `id_reserva` | `INTEGER` | Clave primaria autoincremental |
-| `dni_cliente` | `INTEGER` | Obligatorio y clave foránea |
-| `id_cancha` | `INTEGER` | Obligatorio y clave foránea |
+| `id_reserva` | `INT` | Clave primaria autoincremental |
+| `dni_cliente` | `INT` | Obligatorio y clave foránea |
+| `id_cancha` | `INT` | Obligatorio y clave foránea |
 | `fecha` | `DATE` | Obligatorio |
 | `hora_inicio` | `TIME` | Obligatorio |
 | `hora_fin` | `TIME` | Obligatorio |
-| `estado_reserva` | `VARCHAR(20)` | `Confirmada`, `Pendiente` o `Cancelada` |
+| `estado_reserva` | `ENUM` | `Confirmada`, `Pendiente` o `Cancelada` |
+| `creado_en` | `DATETIME` | Fecha de creación automática |
+| `vence_pago` | `DATETIME` | Obligatorio para reservas pendientes |
 
 ## Relaciones
 
@@ -74,12 +74,12 @@ Relaciona un cliente con una cancha en una fecha y horario determinados.
 - Una reserva puede estar confirmada, pendiente o cancelada.
 
 Estas reglas ya se prueban parcialmente desde la interfaz mediante
-validaciones en Python. Cuando se conecte SQLite, también deberán contemplarse
+validaciones en Python. Al conectar la interfaz con MySQL, también deberán contemplarse
 en la capa de persistencia.
 
 ## Datos iniciales
 
-El archivo `schema.sql` incluye registros de ejemplo para las tres entidades:
+El archivo `schema_mysql.sql` incluye registros de ejemplo para las tres entidades:
 
 - Tres clientes.
 - Cuatro canchas de pádel y fútbol, con estados activos e inactivos.

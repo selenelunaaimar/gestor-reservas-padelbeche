@@ -11,9 +11,8 @@ del sistema. Actualmente se encuentran implementadas las pantallas, la
 navegación entre secciones, el funcionamiento de los botones y las principales
 validaciones de datos.
 
-También se comenzó a diseñar la base de datos SQLite mediante un esquema SQL y
-un script de creación. La base de datos todavía no está conectada a la
-interfaz gráfica.
+Se definió el esquema de la base de datos en MySQL. La base todavía no está
+conectada a la interfaz gráfica.
 
 Por el momento, la aplicación utiliza listas temporales en memoria para
 mostrar y modificar los datos. Por ese motivo, los cambios realizados desde
@@ -37,18 +36,20 @@ la interfaz se pierden al cerrar el programa.
 
 - Python 3
 - Tkinter y ttk
-- SQLite, para el diseño inicial de la base de datos
+- MySQL 8 para la base de datos
+- MySQL Connector/Python para la conexión desde Python
 - Git para el control de versiones
 
-No se requieren paquetes externos para ejecutar la interfaz.
+La interfaz gráfica todavía trabaja con datos temporales en memoria. El
+conector MySQL se instala desde `requirements.txt`.
 
 ## Estructura del proyecto
 
 ```text
 .
 |-- BASE_DE_DATOS/
-|   |-- database.py       # Crea la base SQLite a partir del esquema
-|   `-- schema.sql        # Tablas y datos iniciales
+|   |-- database.py       # Conexión a MySQL
+|   `-- schema_mysql.sql  # Tablas y datos iniciales
 |-- TKINTER/
 |   |-- main.py           # Ventana principal y navegación
 |   |-- clientes.py       # Pantalla y operaciones de clientes
@@ -63,11 +64,13 @@ No se requieren paquetes externos para ejecutar la interfaz.
 ## Requisitos
 
 - Python 3 instalado.
+- MySQL Server 8.0 o superior instalado y en ejecución.
 - Tkinter disponible junto con la instalación de Python.
+- Dependencias de Python instaladas con `python -m pip install -r requirements.txt`.
 
-En Windows, la instalación habitual de Python incluye Tkinter. No se necesita
-instalar una base de datos ni dependencias adicionales para probar la
-interfaz.
+En Windows, la instalación habitual de Python incluye Tkinter. Cada integrante
+debe instalar MySQL localmente y crear su propia copia de la base usando el
+esquema compartido del repositorio.
 
 ## Ejecución de la interfaz
 
@@ -81,28 +84,57 @@ python main.py
 La ventana principal permite acceder a las secciones **Reservas**,
 **Clientes**, **Canchas** y **Consultas**.
 
-## Creación de la base de datos de prueba
+## Preparar MySQL local
 
-La base inicial puede generarse de forma independiente ejecutando:
+1. Instalar e iniciar MySQL Server 8.0 o superior. MySQL Workbench es opcional,
+	pero permite ejecutar el esquema gráficamente.
+2. Ejecutar `BASE_DE_DATOS/schema_mysql.sql` desde MySQL Workbench (abrir el
+	archivo y ejecutar el script) o, desde CMD o Bash, con el cliente `mysql`
+	desde la raíz del repositorio:
 
 ```bash
-cd BASE_DE_DATOS
-python database.py
+mysql -u root -p < BASE_DE_DATOS/schema_mysql.sql
 ```
 
-El script crea el archivo `padelbeche.db`, elimina una versión anterior si
-existe y ejecuta `schema.sql`, que contiene las tablas y registros de ejemplo.
+El script crea la base `padelbeche`, sus tablas y registros de ejemplo. Si usan
+un usuario distinto de `root`, debe tener permisos para crear la base.
 
-Este archivo se genera como parte del desarrollo de la base de datos, pero no
-es utilizado todavía por las pantallas de Tkinter.
+3. Instalar el conector Python desde la raíz del repositorio:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+4. Configurar las variables de conexión en la terminal. En PowerShell, por
+	ejemplo:
+
+```powershell
+$env:DB_HOST = "localhost"
+$env:DB_PORT = "3306"
+$env:DB_USER = "root"
+$env:DB_PASSWORD = "tu_contraseña_local"
+$env:DB_NAME = "padelbeche"
+```
+
+Cada integrante debe usar sus propias credenciales locales. No subir
+contraseñas a GitHub. Estas variables duran mientras siga abierta esa terminal.
+
+5. Comprobar la conexión desde la raíz del repositorio:
+
+```bash
+python -c "from BASE_DE_DATOS.database import obtener_conexion; conexion = obtener_conexion(); print('Conexión a MySQL correcta'); conexion.close()"
+```
+
+La interfaz de Tkinter todavía no consume esta conexión; actualmente conserva
+los datos en listas en memoria.
 
 ## Próximas etapas
 
-- Conectar la interfaz gráfica con SQLite.
+- Conectar la interfaz gráfica con MySQL.
 - Reemplazar las listas temporales por operaciones de lectura y escritura en
 	la base de datos.
 - Mantener los registros al cerrar y volver a abrir la aplicación.
-- Aplicar desde SQLite las relaciones entre clientes, canchas y reservas.
+- Aplicar desde MySQL las relaciones entre clientes, canchas y reservas.
 - Completar las validaciones de integridad y persistencia.
 
 ## Documentación adicional
