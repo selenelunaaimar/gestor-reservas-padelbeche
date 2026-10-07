@@ -1,25 +1,8 @@
+import mysql.connector
 from datetime import datetime
 import tkinter as tk
 from tkinter import messagebox, ttk
-
-# Importamos clientes si se utiliza el modulo externo, de lo contrario se deja una lista base
-try:
-    from clientes import clientes
-except ImportError:
-    clientes = []
-
-reservas = [
-    {
-         "id": "1",
-         "cliente": "12345678",
-         "cancha": "1",
-         "fecha": "2026-09-25",
-         "inicio": "10:00",
-         "fin": "11:00",
-         "estado": "Confirmada",
-     }
-]
-
+from BASE_DE_DATOS.database import obtener_conexion
 
 def ventana_reservas(parent=None):
     # ventana principal o Toplevel
@@ -106,10 +89,18 @@ def ventana_reservas(parent=None):
     # =========================
 
     def buscar_nombre_cliente(dni):
-        """Busca en la lista de clientes y retorna el nombre y apellido directamente."""
-        for c in clientes:
-            if str(c.get("dni")) == str(dni):
-                return c.get("nombre_apellido", "Desconocido")
+        # Busca en la base de datos de clientes y retorna el nombre y apellido directamente
+        try:
+            conexion = obtener_conexion()
+            cursor = conexion.cursor(dictionary=True)
+            cursor.execute("SELECT nombre_apellido FROM clientes WHERE dni = %s", (dni,))
+            resultado = cursor.fetchone()
+            cursor.close()
+            conexion.close()
+            if resultado:
+                return resultado["nombre_apellido"]
+        except Exception:
+            pass
         return "No registrado"
 
     def actualizar_campo_nombre(event=None):
@@ -123,7 +114,7 @@ def ventana_reservas(parent=None):
             entrada_nombre_cliente.insert(0, nombre)
         entrada_nombre_cliente.config(state="readonly")
 
-    # Enlazamos el campo DNI para que actualice el nombre en tiempo real
+    # Enlaza el campo DNI para que actualice el nombre en tiempo real
     entrada_cliente.bind("<KeyRelease>", actualizar_campo_nombre)
 
     # Cancha
@@ -175,22 +166,38 @@ def ventana_reservas(parent=None):
         for item in tabla.get_children():
             tabla.delete(item)
 
-        for reserva in reservas:
-            nombre_cliente = buscar_nombre_cliente(reserva["cliente"])
-            tabla.python(
-                "",
-                tk.END,
-                values=(
-                    reserva["id"],
-                    reserva["cliente"],
-                    nombre_cliente,
-                    reserva["cancha"],
-                    reserva["fecha"],
-                    reserva["inicio"],
-                    reserva["fin"],
-                    reserva["estado"],
-                ),
-            )
+        try:
+            conexion = obtener_conexion()
+            cursor = conexion.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT r.id_reserva AS id, r.dni_cliente AS cliente, c.nombre_apellido AS nombre, 
+                       r.id_cancha AS cancha, r.fecha, TIME_FORMAT(r.hora_inicio, '%H:%i') AS inicio, 
+                       TIME_FORMAT(r.hora_fin, '%H:%i') AS fin, r.estado_reserva AS estado 
+                FROM reservas r
+                JOIN clientes c ON r.dni_cliente = c.dni
+            """)
+            lista_reservas = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+
+            for reserva in lista_reservas:
+                fecha_str = reserva["fecha"].strftime("%Y-%m-%d") if hasattr(reserva["fecha"], "strftime") else str(reserva["fecha"])
+                tabla.insert(
+                    "",
+                    tk.END,
+                    values=(
+                        reserva["id"],
+                        reserva["cliente"],
+                        reserva["nombre"],
+                        reserva["cancha"],
+                        fecha_str,
+                        reserva["inicio"],
+                        reserva["fin"],
+                        reserva["estado"],
+                    ),
+                )
+        except Exception as e:
+            messagebox.showerror("Error de Base de Datos", f"No se pudo cargar la tabla: {e}")
 
     def convertir_hora(hora):
         try:
@@ -213,18 +220,25 @@ def ventana_reservas(parent=None):
         if inicio_nuevo is None or fin_nuevo is None:
             return True
 
-        for reserva in reservas:
-            if reserva["estado"] == "Cancelada":
-                continue
+        try:
+            conexion = obtener_conexion()
+            cursor = conexion.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT id_reserva AS id, id_cancha AS cancha, fecha, 
+                       TIME_FORMAT(hora_inicio, '%H:%i') AS inicio, 
+                       TIME_FORMAT(hora_fin, '%H:%i') AS fin, estado_reserva AS estado 
+                FROM reservas 
+                WHERE id_cancha = %s AND fecha = %s AND estado_reserva != 'Cancelada'
+            """, (cancha, fecha))
+            registros = cursor.fetchall()
+            cursor.close()
+            conexion.close()
 
-            # Si estamos modificando, saltamos el registro que posee el mismo ID
-            if id_excluir and str(reserva["id"]) == str(id_excluir):
-                continue
+            for reserva in registros:
+                # Si estamos modificando, saltamos el registro que posee el mismo ID
+                if id_excluir and str(reserva["id"]) == str(id_excluir):
+                    continue
 
-            if (
-                str(reserva["cancha"]) == str(cancha)
-                and reserva["fecha"] == fecha
-            ):
                 inicio_existente = convertir_hora(reserva["inicio"])
                 fin_existente = convertir_hora(reserva["fin"])
 
@@ -233,6 +247,8 @@ def ventana_reservas(parent=None):
                     and fin_nuevo > inicio_existente
                 ):
                     return True
+        except Exception:
+            pass
 
         return False
 
@@ -317,37 +333,26 @@ def ventana_reservas(parent=None):
             )
             return
 
-        # Validación ID duplicado
-        for reserva in reservas:
-            if reserva["id"] == id_reserva:
-                messagebox.showerror(
-                    "Error", "Ya existe una reserva con ese ID."
-                )
-                return
+        # Validaciones realizadas contra la BD y sus Triggers/Constraints
+        try:
+            conexion = obtener_conexion()
+            cursor = conexion.cursor()
+            
+            # Insertar en la base de datos (los triggers de MySQL validaran cancha activa y superposición automaticamente)
+            query = """
+                INSERT INTO reservas (id_reserva, dni_cliente, id_cancha, fecha, hora_inicio, hora_fin, estado_reserva)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (id_reserva, cliente, cancha, fecha, inicio, fin, estado))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
 
-        # Validación superposición
-        if estado != "Cancelada":
-            if existe_superposicion(cancha, fecha, inicio, fin):
-                messagebox.showerror(
-                    "Cancha ocupada",
-                    "La cancha ya tiene una reserva en ese horario.",
-                )
-                return
-
-        # Guardar reserva
-        reservas.append({
-            "id": id_reserva,
-            "cliente": cliente,
-            "cancha": cancha,
-            "fecha": fecha,
-            "inicio": inicio,
-            "fin": fin,
-            "estado": estado,
-        })
-
-        actualizar_tabla()
-        limpiar()
-        messagebox.showinfo("Reserva", "Reserva guardada correctamente.")
+            actualizar_tabla()
+            limpiar()
+            messagebox.showinfo("Reserva", "Reserva guardada correctamente.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error en Base de Datos", f"No se pudo guardar: {err.msg}")
 
     def modificar():
         id_reserva = entrada_id.get().strip()
@@ -383,40 +388,63 @@ def ventana_reservas(parent=None):
                 )
                 return
 
-        for r in reservas:
-            if r["id"] == id_reserva:
-                r["cliente"] = cliente
-                r["cancha"] = cancha
-                r["fecha"] = fecha
-                r["inicio"] = inicio
-                r["fin"] = fin
-                r["estado"] = estado
+        try:
+            conexion = obtener_conexion()
+            cursor = conexion.cursor()
+            query = """
+                UPDATE reservas 
+                SET dni_cliente = %s, id_cancha = %s, fecha = %s, hora_inicio = %s, hora_fin = %s, estado_reserva = %s
+                WHERE id_reserva = %s
+            """
+            cursor.execute(query, (cliente, cancha, fecha, inicio, fin, estado, id_reserva))
+            conexion.commit()
+            
+            filas_afectadas = cursor.rowcount
+            cursor.close()
+            conexion.close()
+
+            if filas_afectadas > 0:
                 actualizar_tabla()
                 limpiar()
-                messagebox.showinfo(
-                    "Éxito", "Reserva modificada correctamente."
-                )
-                return
-
-        messagebox.showwarning(
-            "Modificar", "No se encontró una reserva con ese ID."
-        )
+                messagebox.showinfo("Éxito", "Reserva modificada correctamente.")
+            else:
+                messagebox.showwarning("Modificar", "No se encontró una reserva con ese ID.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error en Base de Datos", f"No se pudo modificar: {err.msg}")
 
     def buscar():
         id_reserva = entrada_id.get().strip()
+        if not id_reserva:
+            messagebox.showwarning("Atención", "Ingrese un ID de reserva para buscar.")
+            return
 
-        for reserva in reservas:
-            if reserva["id"] == id_reserva:
+        try:
+            conexion = obtener_conexion()
+            cursor = conexion.cursor(dictionary=True)
+            cursor.execute("""
+                SELECT id_reserva AS id, dni_cliente AS cliente, id_cancha AS cancha, fecha, 
+                       TIME_FORMAT(hora_inicio, '%H:%i') AS inicio, 
+                       TIME_FORMAT(hora_fin, '%H:%i') AS fin, estado_reserva AS estado 
+                FROM reservas WHERE id_reserva = %s
+            """, (id_reserva,))
+            reserva = cursor.fetchone()
+            cursor.close()
+            conexion.close()
+
+            if reserva:
                 limpiar()
                 entrada_id.insert(0, reserva["id"])
                 entrada_cliente.insert(0, reserva["cliente"])
                 actualizar_campo_nombre()
                 entrada_cancha.insert(0, reserva["cancha"])
-                entrada_fecha.insert(0, reserva["fecha"])
+                fecha_str = reserva["fecha"].strftime("%Y-%m-%d") if hasattr(reserva["fecha"], "strftime") else str(reserva["fecha"])
+                entrada_fecha.insert(0, fecha_str)
                 entrada_inicio.insert(0, reserva["inicio"])
                 entrada_fin.insert(0, reserva["fin"])
                 entrada_estado.set(reserva["estado"])
                 return
+        except Exception:
+            pass
 
         messagebox.showinfo("Buscar", "No se encontró la reserva.")
 
@@ -437,16 +465,19 @@ def ventana_reservas(parent=None):
         ):
             return
 
-        global reservas
-        reservas = [
-            reserva
-            for reserva in reservas
-            if str(reserva["id"]) != str(id_reserva)
-        ]
+        try:
+            conexion = obtener_conexion()
+            cursor = conexion.cursor()
+            cursor.execute("DELETE FROM reservas WHERE id_reserva = %s", (id_reserva,))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
 
-        actualizar_tabla()
-        limpiar()
-        messagebox.showinfo("Éxito", "Reserva eliminada correctamente.")
+            actualizar_tabla()
+            limpiar()
+            messagebox.showinfo("Éxito", "Reserva eliminada correctamente.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error", f"No se pudo eliminar: {err.msg}")
 
     def seleccionar_tabla(event):
         # Permite cargar de forma automatica los datos en el formulario al hacer clic sobre una fila de la tabla
