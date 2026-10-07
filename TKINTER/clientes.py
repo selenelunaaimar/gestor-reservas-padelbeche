@@ -1,15 +1,14 @@
+import sys
+import os
+
+# Agrega la carpeta raiz del proyecto al path de Python para encontrar BASE_DE_DATOS
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import tkinter as tk
 from tkinter import ttk, messagebox
 import re
-
-clientes = [
-    {
-         "dni": "12345678",
-         "nombre_apellido": "Juan Perez",
-         "telefono": "3511234567",
-         "email": "juan.perez@gmail.com"
-     }
-]
+from BASE_DE_DATOS.database import obtener_conexion
+import mysql.connector # Importamos por si usamos excepciones para los errores
 
 def ventana_clientes(parent=None):
     # Se unificó el manejo de la ventana principal, manteniendo la compatibilidad tanto si se abre independiente como en solapas
@@ -71,20 +70,23 @@ def ventana_clientes(parent=None):
         entrada_email.delete(0, tk.END)
 
     def actualizar_tabla():
+        """Consulta la base de datos MySQL y llena la tabla del Treeview."""
         for item in tabla.get_children():
             tabla.delete(item)
 
-        for cliente in clientes:
-            tabla.insert(
-                "",
-                tk.END,
-                values=(
-                    cliente["dni"],
-                    cliente["nombre_apellido"],
-                    cliente["telefono"],
-                    cliente["email"]
-                )
-            )
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("SELECT dni, nombre_apellido, telefono, email FROM clientes")
+                registros = cursor.fetchall()
+                for cliente in registros:
+                    tabla.insert("", tk.END, values=cliente)
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error de Base de Datos", f"No se pudieron cargar los clientes: {err}")
+            finally:
+                cursor.close()
+                conexion.close()
 
     def guardar():
         dni = entrada_dni.get().strip() # .strip elimina espacios
@@ -177,24 +179,23 @@ def ventana_clientes(parent=None):
             )
             return
         
-        for cliente in clientes: # Valida DNI duplicado
-            if cliente["dni"] == dni:
-                messagebox.showerror(
-                    "Error",
-                    "Ya existe un cliente con ese DNI."
-                )
-                return
-
-        clientes.append({
-            "dni": dni,
-            "nombre_apellido": nombre_apellido,
-            "telefono": telefono,
-            "email": email
-        })
-
-        actualizar_tabla()
-        limpiar()
-        messagebox.showinfo("Cliente", "Cliente guardado correctamente.")
+        # Inserta el cliente directamente en la Base de Datos MySQL
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                query = "INSERT INTO clientes (dni, nombre_apellido, telefono, email) VALUES (%s, %s, %s, %s)"
+                cursor.execute(query, (dni, nombre_apellido, telefono, email))
+                conexion.commit()
+                
+                actualizar_tabla()
+                limpiar()
+                messagebox.showinfo("Cliente", "Cliente guardado correctamente en la base de datos.")
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error", f"No se pudo guardar (verificá que el DNI no esté repetido):\n{err}")
+            finally:
+                cursor.close()
+                conexion.close()
 
     def modificar():
         dni = entrada_dni.get().strip()
@@ -223,73 +224,57 @@ def ventana_clientes(parent=None):
             messagebox.showerror("Error", "Debe ingresar un mail válido.")
             return
 
-        cliente_encontrado = False
-        for cliente in clientes:
-            if cliente["dni"] == dni:
-                cliente["nombre_apellido"] = nombre_apellido
-                cliente["telefono"] = telefono
-                cliente["email"] = email
-                cliente_encontrado = True
-                break
+        # Actualiza el registro en la Base de Datos MySQL
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                query = "UPDATE clientes SET nombre_apellido = %s, telefono = %s, email = %s WHERE dni = %s"
+                cursor.execute(query, (nombre_apellido, telefono, email, dni))
+                conexion.commit()
 
-        if cliente_encontrado:
-            actualizar_tabla()
-            limpiar()
-            messagebox.showinfo("Éxito", "Cliente modificado correctamente.")
-        else:
-            messagebox.showwarning("Modificar", "No se encontró un cliente registrado con ese DNI.")
+                if cursor.rowcount > 0:
+                    actualizar_tabla()
+                    limpiar()
+                    messagebox.showinfo("Éxito", "Cliente modificado correctamente.")
+                else:
+                    messagebox.showwarning("Modificar", "No se encontró un cliente registrado con ese DNI.")
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error", f"No se pudo modificar: {err}")
+            finally:
+                cursor.close()
+                conexion.close()
 
-    def buscar(): # Busca registro por DNI y lo muestra en el formulario
+    def buscar(): # Busca registro por DNI en la base de datos y lo muestra en el formulario
         dni = entrada_dni.get().strip()
         if not dni:
             messagebox.showwarning("Buscar", "Ingrese un DNI para buscar.")
             return
 
-        for cliente in clientes:
-            if cliente["dni"] == dni:
-                entrada_nombre_apellido.delete(0, tk.END)
-                entrada_nombre_apellido.insert(0, cliente["nombre_apellido"])
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                cursor.execute("SELECT nombre_apellido, telefono, email FROM clientes WHERE dni = %s", (dni,))
+                resultado = cursor.fetchone()
 
-                entrada_telefono.delete(0, tk.END)
-                entrada_telefono.insert(0, cliente["telefono"])
+                if resultado:
+                    entrada_nombre_apellido.delete(0, tk.END)
+                    entrada_nombre_apellido.insert(0, resultado[0])
 
-                entrada_email.delete(0, tk.END)
-                entrada_email.insert(0, cliente["email"])
-                return
+                    entrada_telefono.delete(0, tk.END)
+                    entrada_telefono.insert(0, resultado[1])
 
-        messagebox.showinfo(
-            "Buscar",
-            "No se encontró un cliente con ese DNI."
-        )
+                    entrada_email.delete(0, tk.END)
+                    entrada_email.insert(0, resultado[2])
+                else:
+                    messagebox.showinfo("Buscar", "No se encontró un cliente con ese DNI.")
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error", f"Error al buscar: {err}")
+            finally:
+                cursor.close()
+                conexion.close()
 
-    def eliminar():
-        seleccion = tabla.selection()
-        if not seleccion:
-            messagebox.showwarning(
-                "Eliminar",
-                "Debe seleccionar un cliente de la tabla."
-            )
-            return
-
-        item = tabla.item(seleccion[0])
-        dni = str(item["values"][0])
-
-        if not messagebox.askyesno(
-            "Eliminar",
-            f"¿Está seguro de eliminar el cliente con DNI {dni}?"
-        ):
-            return
-
-        global clientes
-        clientes = [
-            cliente
-            for cliente in clientes
-            if str(cliente["dni"]) != str(dni)
-        ]
-        
-        actualizar_tabla()
-        limpiar()
-        messagebox.showinfo("Eliminar", "Cliente eliminado correctamente.")
 
     def seleccionar_tabla(event):
         seleccion = tabla.selection()
@@ -332,19 +317,12 @@ def ventana_clientes(parent=None):
 
     tk.Button(
         botones,
-        text="Eliminar",
-        command=eliminar,
-        width=15
-    ).pack(pady=2)
-
-    tk.Button(
-        botones,
         text="Limpiar",
         command=limpiar,
         width=15
     ).pack(pady=2)
 
-    # Carga inicial de datos en la tabla
+    # Carga inicial de datos en la tabla desde la base de datos
     actualizar_tabla()
 
     # Si se pasa un contenedor padre, empaqueta y retorna la ventana principal

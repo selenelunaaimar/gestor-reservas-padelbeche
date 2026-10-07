@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 
 from reservas import reservas
-from clientes import clientes
+from clientes import clientes, ventana_clientes
 from canchas import canchas
 
 
