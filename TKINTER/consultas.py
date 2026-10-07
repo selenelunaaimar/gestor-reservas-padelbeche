@@ -1,9 +1,13 @@
+import sys
+import os
+
+# Agrega la carpeta raíz del proyecto al path de Python para encontrar BASE_DE_DATOS
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import tkinter as tk
 from tkinter import ttk, messagebox
-
-from reservas import reservas
-from clientes import clientes, ventana_clientes
-from canchas import canchas
+from BASE_DE_DATOS.database import obtener_conexion
+import mysql.connector
 
 
 def ventana_consultas(parent=None):
@@ -134,96 +138,94 @@ def ventana_consultas(parent=None):
     # ------------------------------------------------
 
     def cargar_filtros():
-        nombres_clientes = ["Todos"]
+        """Carga los nombres de clientes y los IDs de canchas desde la base de datos MySQL para los combobox."""
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                
+                # Cargar clientes
+                cursor.execute("SELECT nombre_apellido FROM clientes")
+                nombres_clientes = ["Todos"] + [row[0] for row in cursor.fetchall()]
+                entrada_cliente["values"] = nombres_clientes
+                entrada_cliente.set("Todos")
 
-        for cliente in clientes:
-            nombres_clientes.append(cliente["nombre_apellido"])
+                # Cargar canchas
+                cursor.execute("SELECT id_cancha FROM canchas")
+                ids_canchas = ["Todas"] + [str(row[0]) for row in cursor.fetchall()]
+                entrada_cancha["values"] = ids_canchas
+                entrada_cancha.set("Todas")
 
-        entrada_cliente["values"] = nombres_clientes
-        entrada_cliente.set("Todos")
-
-        ids_canchas = ["Todas"]
-
-        for cancha in canchas:
-            ids_canchas.append(cancha["id"])
-
-        entrada_cancha["values"] = ids_canchas
-        entrada_cancha.set("Todas")
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error", f"No se pudieron cargar los filtros: {err}")
+            finally:
+                cursor.close()
+                conexion.close()
 
     def limpiar_resultados():
         for item in tabla.get_children():
             tabla.delete(item)
 
     def buscar():
-        desde = entrada_desde.get()
-        hasta = entrada_hasta.get()
+        desde = entrada_desde.get().strip()
+        hasta = entrada_hasta.get().strip()
         cliente_filtro = entrada_cliente.get()
         cancha_filtro = entrada_cancha.get()
 
         limpiar_resultados()
 
-        resultados = 0
+        # Consulta robusta uniendo reservas, clientes y canchas en MySQL
+        conexion = obtener_conexion()
+        if conexion:
+            try:
+                cursor = conexion.cursor()
+                
+                query = """
+                    SELECT r.fecha, c.nombre_apellido, c.dni, r.id_cancha, can.tipo_deporte, r.hora_inicio, r.hora_fin, r.estado_reserva
+                    FROM reservas r
+                    JOIN clientes c ON r.dni_cliente = c.dni
+                    JOIN canchas can ON r.id_cancha = can.id_cancha
+                    WHERE 1=1
+                """
+                params = []
 
-        for reserva in reservas:
+                if desde != "":
+                    query += " AND r.fecha >= %s"
+                    params.append(desde)
 
-            if desde != "" and reserva["fecha"] < desde:
-                continue
+                if hasta != "":
+                    query += " AND r.fecha <= %s"
+                    params.append(hasta)
 
-            if hasta != "" and reserva["fecha"] > hasta:
-                continue
+                if cliente_filtro != "Todos" and cliente_filtro != "":
+                    query += " AND c.nombre_apellido = %s"
+                    params.append(cliente_filtro)
 
-            # Buscar nombre del cliente correspondiente a la reserva actual por su DNI (reserva["cliente"])
-            nombre_cliente_actual = ""
-            for cliente in clientes:
-                if str(cliente["dni"]) == str(reserva["cliente"]):
-                    nombre_cliente_actual = cliente["nombre_apellido"]
-                    break
+                if cancha_filtro != "Todas" and cancha_filtro != "":
+                    query += " AND r.id_cancha = %s"
+                    params.append(cancha_filtro)
 
-            if (
-                cliente_filtro != "Todos"
-                and cliente_filtro != ""
-                and nombre_cliente_actual != cliente_filtro
-            ):
-                continue
+                cursor.execute(query, tuple(params))
+                registros = cursor.fetchall()
 
-            if (
-                cancha_filtro != "Todas"
-                and cancha_filtro != ""
-                and str(reserva["cancha"]) != str(cancha_filtro)
-            ):
-                continue
+                for reserva in registros:
+                    tabla.insert(
+                        "",
+                        tk.END,
+                        values=reserva
+                    )
 
-            dni = reserva["cliente"]
-            tipo = ""
+                if len(registros) == 0:
+                    messagebox.showinfo(
+                        "Consulta",
+                        "No se encontraron reservas."
+                    )
 
-            # AQUÍ ESTABA EL CAMBIO: Se usa cancha["tipo"] para extraer el deporte correctamente
-            for cancha in canchas:
-                if str(cancha["id"]) == str(reserva["cancha"]):
-                    tipo = cancha["tipo"]
-                    break
-
-            tabla.insert(
-                "",
-                tk.END,
-                values=(
-                    reserva["fecha"],
-                    nombre_cliente_actual,
-                    dni,
-                    reserva["cancha"],
-                    tipo,
-                    reserva["inicio"],
-                    reserva["fin"],
-                    reserva["estado"]
-                )
-            )
-
-            resultados += 1
-
-        if resultados == 0:
-            messagebox.showinfo(
-                "Consulta",
-                "No se encontraron reservas."
-            )
+            except mysql.connector.Error as err:
+                messagebox.showerror("Error", f"Error al realizar la consulta: {err}")
+            finally:
+                cursor.close()
+                conexion.close()
 
     # ------------------------------------------------
     # BOTONES
