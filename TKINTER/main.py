@@ -4,7 +4,7 @@ from canchas import ventana_canchas
 from clientes import ventana_clientes
 import tkinter as tk #importa la biblioteca gráfica Tkinter 
 from datetime import datetime #obtiene la fecha y hora actuales
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from BASE_DE_DATOS.database import obtener_conexion
 
 """VENTANA PRINCIPAL"""
@@ -19,6 +19,12 @@ BOTON_HOVER = "#27D7A3"
 BLANCO = "#FFFFFF"
 NEGRO = "#000000"
 
+""" Credenciales de acceso organizadas por rol - diccionario """
+CREDENCIALES = {
+    "Supervisor": "Admin2026",
+    "Empleado": "1234Hola",
+}
+
 ventana.configure(bg=FONDO)
 
 def mostrar_pantalla(constructor, titulo):
@@ -27,14 +33,10 @@ def mostrar_pantalla(constructor, titulo):
 
     ventana.title(f"PadelBeche - {titulo}")
     constructor(contenido)
-
 barra_navegacion = tk.Frame(ventana, bg=FONDO, width=220)
-barra_navegacion.pack(side="left", fill="y")
 """"Tamaño fijo con pack_propagate(False)"""
 barra_navegacion.pack_propagate(False)
-
 contenido = tk.Frame(ventana)
-contenido.pack(side="right", fill="both", expand=True)
 
 """padx agrega espacio horizontal dentro o alrededor de un elemento
 pady agrega espacio vertical.
@@ -178,7 +180,7 @@ crear_boton("Clientes", ventana_clientes, "Gestión de Clientes")
 crear_boton("Canchas", ventana_canchas, "Gestión de Canchas")
 crear_boton("Consultas", ventana_consultas, "Consultas")
 
-tk.Button(
+boton_salir = tk.Button(
     barra_navegacion,
     text="Salir",
     command=ventana.destroy,
@@ -192,11 +194,101 @@ tk.Button(
     relief="flat",
     bd=0,
     cursor="hand2"
-).pack(side="bottom", pady=25)
-
-mostrar_pantalla(
-    pantalla_inicio,
-    "Inicio"
 )
+boton_salir.pack(side="bottom", pady=25)
+
+""" Funcion ingresar"""
+def ingresar():
+    rol = rol_seleccionado.get()
+    contrasena = entrada_contrasena.get()
+
+    if CREDENCIALES.get(rol) != contrasena:
+        messagebox.showerror("Acceso denegado", "Rol o contraseña incorrectos.")
+        entrada_contrasena.delete(0, tk.END)
+        entrada_contrasena.focus_set()
+        return
+
+    pantalla_ingreso.destroy()
+    barra_navegacion.pack(side="left", fill="y")
+    contenido.pack(side="right", fill="both", expand=True)
+    mostrar_pantalla(pantalla_inicio, "Inicio")
+
+""""contenedores de la pantalla"""
+pantalla_ingreso = tk.Frame(ventana, bg=FONDO)
+pantalla_ingreso.pack(fill="both", expand=True) #.pack( hace que la pantalla ocupe la ventana)
+
+formulario_ingreso = tk.Frame(pantalla_ingreso, bg=BLANCO, padx=45, pady=35)
+formulario_ingreso.place(relx=0.5, rely=0.5, anchor="center") #.place() hace que se centre el formulario
+
+tk.Label(
+    formulario_ingreso,
+    text="PADEL BECHE",
+    font=("Arial", 26, "bold"),
+    bg=BLANCO,
+    fg=FONDO
+).pack(pady=(0, 8))
+
+tk.Label(
+    formulario_ingreso,
+    text="Iniciar sesión",
+    font=("Arial", 16),
+    bg=BLANCO,
+    fg=NEGRO
+).pack(pady=(0, 22))
+
+tk.Label(
+    formulario_ingreso,
+    text="Rol",
+    font=("Arial", 11, "bold"),
+    bg=BLANCO,
+    fg=NEGRO
+).pack(anchor="w")
+
+#StringVar es una variable especial de Tkinter que mantiene sincronizado un valor de texto con un control de la interfaz
+#Combobox es una lista desplegable -> el valor inicial siempre es Empleado
+rol_seleccionado = tk.StringVar(value="Empleado")  
+selector_rol = ttk.Combobox(
+    formulario_ingreso,
+    textvariable=rol_seleccionado,
+    values=tuple(CREDENCIALES),
+    state="readonly", #esto es para que no sea texto libre, si no elegir una opcion.
+    width=28
+)
+selector_rol.pack(pady=(5, 15))
+
+tk.Label(
+    formulario_ingreso,
+    text="Contraseña",
+    font=("Arial", 11, "bold"),
+    bg=BLANCO,
+    fg=NEGRO
+).pack(anchor="w")
+
+entrada_contrasena = tk.Entry(formulario_ingreso, show="*", font=("Arial", 12), width=30)
+entrada_contrasena.pack(pady=(5, 20))
+
+def ingresar_con_enter(evento):
+    if evento.keysym == "Return":
+        ingresar()
+        return "break"
+    return None
+
+entrada_contrasena.bind("<Return>", ingresar_con_enter)
+
+tk.Button(
+    formulario_ingreso,
+    text="Ingresar",
+    command=ingresar,
+    width=25,
+    height=2,
+    font=("Arial", 11, "bold"),
+    bg=BOTON,
+    fg=NEGRO,
+    activebackground=BOTON_HOVER,
+    activeforeground=BLANCO,
+    relief="flat",
+    bd=0,
+    cursor="hand2"
+).pack()
 
 ventana.mainloop()

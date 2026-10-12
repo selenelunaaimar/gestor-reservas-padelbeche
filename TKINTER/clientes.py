@@ -29,7 +29,7 @@ def ventana_clientes(parent=None):
     contenedor = tk.Frame(ventana)
     contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    """==================== PANEL IZQUIERDO: TABLA ===================="""
+    """------------------------------------------------ PANEL IZQUIERDO: TABLA ------------------------------------------------"""
     panel_izq = tk.Frame(contenedor, padx=5, pady=5)
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -41,7 +41,7 @@ def ventana_clientes(parent=None):
         tabla.column(col, width=150)
     tabla.pack(fill=tk.BOTH, expand=True)
 
-    """==================== PANEL DERECHO: FORMULARIO Y BOTONES ===================="""
+    """------------------------------------------ PANEL DERECHO: FORMULARIO Y BOTONES ------------------------------------------"""
     panel_der = tk.Frame(contenedor, padx=10, pady=5)
     panel_der.pack(side=tk.RIGHT, fill=tk.Y)
 
@@ -62,7 +62,7 @@ def ventana_clientes(parent=None):
     entrada_email = tk.Entry(panel_der, width=30)
     entrada_email.pack(fill=tk.X, pady=2)
 
-    """Funciones internas"""
+    """------------------------------------------------Funciones internas----------------------------------------------------"""
     def limpiar(): # Limpia los campos del formulario
         entrada_dni.delete(0, tk.END)
         entrada_nombre_apellido.delete(0, tk.END)
