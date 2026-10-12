@@ -10,17 +10,17 @@ def ventana_canchas(parent=None):
         ventana.geometry("1280x720")
         ventana.configure(bg="#f0f0f0")
 
-    # Título principal de la ventana
+    """Título principal de la ventana"""
     titulo = tk.Label(
         ventana, text="Gestión de Canchas", font=("Arial", 20, "bold"), bg="#f0f0f0"
     )
     titulo.pack(pady=(15, 10))
 
-    # Contenedor principal que divide la tabla y el panel derecho
+    """Contenedor principal que divide la tabla y el panel derecho"""
     contenedor = tk.Frame(ventana, bg="#f0f0f0")
     contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    # Panel Izquierdo
+    """Panel Izquierdo"""
     panel_izq = tk.Frame(contenedor, padx=5, pady=5, bg="#f0f0f0")
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -44,7 +44,7 @@ def ventana_canchas(parent=None):
 
     tabla.pack(fill=tk.BOTH, expand=True)
 
-    # Panel Derecho
+    """Panel Derecho"""
     panel_der = tk.Frame(contenedor, padx=5, pady=5, bg="#f0f0f0")
     panel_der.pack(side=tk.RIGHT, fill=tk.Y)
 
@@ -73,7 +73,7 @@ def ventana_canchas(parent=None):
     entrada_estado.pack(fill=tk.X, pady=2)
     entrada_estado.set("Activa")
 
-    # Funciones internas
+    """Funciones internas"""
     def limpiar():
         entrada_id.config(state="normal") # Permitir limpiar y editar el ID para nuevas altas
         entrada_id.delete(0, tk.END)
@@ -191,7 +191,7 @@ def ventana_canchas(parent=None):
                 entrada_precio.insert(0, str(cancha["precio"]))
                 entrada_estado.set(cancha["estado"])
                 
-                # Bloquear el ID para evitar modificarlo por accidente durante la edición
+                """Bloquear el ID para evitar modificarlo por accidente durante la edición"""
                 entrada_id.config(state="disabled")
                 messagebox.showinfo("Encontrado", "Datos de la cancha cargados correctamente.")
             else:
@@ -200,7 +200,7 @@ def ventana_canchas(parent=None):
             messagebox.showerror("Error en Base de Datos", f"No se pudo realizar la búsqueda: {err.msg}")
 
     def modificar():
-        # Si el ID estaba deshabilitado por haber buscado, lo habilitamos un momento para leerlo
+        """Si el ID estaba deshabilitado por haber buscado, lo habilitamos un momento para leerlo"""
         id_cancha = entrada_id.get().strip()
         capacidad = entrada_capacidad.get().strip()
         tipo = entrada_tipo.get()
@@ -251,7 +251,7 @@ def ventana_canchas(parent=None):
         except mysql.connector.Error as err:
             messagebox.showerror("Error en Base de Datos", f"No se pudo modificar la cancha: {err.msg}")
 
-    # Función auxiliar para autocompletar campos al hacer clic en una fila de la tabla
+    """Función auxiliar para autocompletar campos al hacer clic en una fila de la tabla"""
     def seleccionar_fila(event):
         seleccion = tabla.selection()
         if seleccion:
@@ -268,7 +268,7 @@ def ventana_canchas(parent=None):
 
     tabla.bind("<<TreeviewSelect>>", seleccionar_fila)
 
-    # Botones de acción organizados en el panel derecho
+    """Botones de acción organizados en el panel derecho"""
     botones = tk.Frame(panel_der, pady=10, bg="#f0f0f0")
     botones.pack(fill=tk.X)
 

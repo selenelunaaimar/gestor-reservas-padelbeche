@@ -11,8 +11,7 @@ def obtener_conexion():
     )
 
 
-# Bloque de prueba de conectividad local. Permite verificar que la conexion
-# con el servidor MySQL Workbench y la base de datos se establezca correctamente.
+""" Bloque de prueba de conectividad local. Permite verificar que la conexion con el servidor MySQL Workbench y la base de datos se establezca correctamente. """
 
 
 if __name__ == "__main__":

@@ -7,12 +7,12 @@ from datetime import datetime #obtiene la fecha y hora actuales
 from tkinter import ttk
 from BASE_DE_DATOS.database import obtener_conexion
 
-#VENTANA PRINCIPAL
+"""VENTANA PRINCIPAL"""
 ventana = tk.Tk()
 ventana.title("PadelBeche")
 ventana.geometry("1280x720")
 
-#COLORES
+"""COLORES"""
 FONDO = "#0C3C2B"
 BOTON = "#ef841a"
 BOTON_HOVER = "#27D7A3"
@@ -30,14 +30,15 @@ def mostrar_pantalla(constructor, titulo):
 
 barra_navegacion = tk.Frame(ventana, bg=FONDO, width=220)
 barra_navegacion.pack(side="left", fill="y")
+""""Tamaño fijo con pack_propagate(False)"""
 barra_navegacion.pack_propagate(False)
 
 contenido = tk.Frame(ventana)
 contenido.pack(side="right", fill="both", expand=True)
 
-#padx agrega espacio horizontal dentro o alrededor de un elemento
-#pady agrega espacio vertical.
-#Convertimos el nombre PADEL BECHE en un boton para que siempre vuelva a la pantalla principal
+"""padx agrega espacio horizontal dentro o alrededor de un elemento
+pady agrega espacio vertical.
+Convertimos el nombre PADEL BECHE en un boton para que siempre vuelva a la pantalla principal"""
 tk.Button(
     barra_navegacion,
     text="PADEL BECHE",
@@ -78,7 +79,7 @@ def pantalla_inicio(contenedor):
 
     fecha_hoy = datetime.now().strftime("%d/%m/%Y")
 
-# Recuadro de reservas del dia
+    """ Recuadro de reservas del dia """
     recuadro = tk.LabelFrame(
         contenedor,
         text="Reservas del día",
@@ -100,13 +101,13 @@ def pantalla_inicio(contenedor):
         show="headings"
     )
 
-#el ancho de las columnas las definimos con width (920 pixeles), anchor es para colocar el contenido en el un espacio determinado.
-#       anchor="w"  # izquierda
-#       anchor="e"  # derecha
-#       anchor="center"  # centro
-#       anchor="n"  # arriba
-#       anchor="s"  # abajo
-#stretch es para evitar que Tkinter agrande las columnas automaticamente
+    """el ancho de las columnas las definimos con width (920 pixeles), anchor es para colocar el contenido en el un espacio determinado.
+       anchor="w"  # izquierda
+       anchor="e"  # derecha
+       anchor="center"  # centro
+       anchor="n"  # arriba
+       anchor="s"  # abajo
+    stretch es para evitar que Tkinter agrande las columnas automaticamente"""
 
     tabla.heading("id Reserva", text="ID Reserva")
     tabla.heading("Cliente", text="Cliente")
@@ -127,7 +128,7 @@ def pantalla_inicio(contenedor):
     tabla.column("Estado", width=80, anchor="center", stretch=True)
     tabla.pack(fill="both", expand=True)
 
-    # Obtenemos las reservas y clientes directamente desde MySQL para la pantalla principal
+    """ Obtenemos las reservas y clientes directamente desde MySQL para la pantalla principal """
     try:
         conexion = obtener_conexion()
         cursor = conexion.cursor(dictionary=True)
@@ -150,7 +151,7 @@ def pantalla_inicio(contenedor):
     for reserva in lista_reservas:
         es_hoy = False
         try:
-            # Comparamos la fecha de la base de datos directamente
+            """Comparamos la fecha de la base de datos directamente"""
             if reserva["fecha"] == fecha_actual_str:
                 es_hoy = True
         except Exception:

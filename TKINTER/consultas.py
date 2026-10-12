@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Agrega la carpeta raíz del proyecto al path de Python para encontrar BASE_DE_DATOS
+"""Agrega la carpeta raíz del proyecto al path de Python para encontrar BASE_DE_DATOS"""
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import tkinter as tk
@@ -23,17 +23,15 @@ def ventana_consultas(parent=None):
     )
     titulo.pack(pady=(15, 10))
 
-    # Contenedor principal que divide la tabla y el panel derecho
+    """Contenedor principal que divide la tabla y el panel derecho"""
     contenedor = tk.Frame(ventana)
     contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    # Panel Izquierdo/Medio: Tabla de resultados
+    """Panel Izquierdo/Medio: Tabla de resultados"""
     panel_izq = tk.Frame(contenedor, padx=5, pady=5)
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-    # ------------------------------------------------
-    # TABLA DE RESULTADOS
-    # ------------------------------------------------
+    """------------------------------------------------ TABLA DE RESULTADOS ------------------------------------------------"""
 
     tabla = ttk.Treeview(
         panel_izq,
@@ -70,14 +68,14 @@ def ventana_consultas(parent=None):
 
     tabla.pack(fill=tk.BOTH, expand=True)
 
-    # Panel Derecho: Filtros y Botones
+    """Panel Derecho: Filtros y Botones"""
     panel_der = tk.Frame(contenedor, padx=5, pady=5)
     panel_der.pack(side=tk.RIGHT, fill=tk.Y)
 
     encabezado_filtros = tk.Frame(panel_der)
     encabezado_filtros.pack(fill=tk.X, pady=(0, 5))
 
-    # Canvas para dibujar la lupa
+    """Canvas para dibujar la lupa"""
     lupa = tk.Canvas(
         encabezado_filtros,
         width=22,
@@ -86,30 +84,28 @@ def ventana_consultas(parent=None):
     )
     lupa.pack(side="left", padx=(0, 6))
 
-    # Círculo de la lupa
+    """Círculo de la lupa"""
     lupa.create_oval(
         3, 3, 14, 14,
         outline="black",
         width=2
     )
 
-    # Mango de la lupa
+    """Mango de la lupa"""
     lupa.create_line(
         13, 13, 19, 19,
         fill="black",
         width=2
     )
 
-    # Texto
+    """Texto"""
     tk.Label(
         encabezado_filtros,
         text="Filtros de búsqueda",
         font=("Arial", 11, "bold")
     ).pack(side="left")
 
-    # ------------------------------------------------
-    # CAMPOS DE FILTRO
-    # ------------------------------------------------
+    """------------------------------------------------ CAMPOS DE FILTRO ------------------------------------------------"""
 
     tk.Label(panel_der, text="Desde:").pack(anchor="w")
     entrada_desde = tk.Entry(panel_der)
@@ -133,9 +129,7 @@ def ventana_consultas(parent=None):
     )
     entrada_cancha.pack(fill=tk.X, pady=2)
 
-    # ------------------------------------------------
-    # FUNCIONES INTERNAS
-    # ------------------------------------------------
+    """------------------------------------------------ FUNCIONES INTERNAS ------------------------------------------------"""
 
     def cargar_filtros():
         """Carga los nombres de clientes y los IDs de canchas desde la base de datos MySQL para los combobox."""
@@ -144,13 +138,13 @@ def ventana_consultas(parent=None):
             try:
                 cursor = conexion.cursor()
                 
-                # Cargar clientes
+                """Cargar clientes"""
                 cursor.execute("SELECT nombre_apellido FROM clientes")
                 nombres_clientes = ["Todos"] + [row[0] for row in cursor.fetchall()]
                 entrada_cliente["values"] = nombres_clientes
                 entrada_cliente.set("Todos")
 
-                # Cargar canchas
+                """Cargar canchas"""
                 cursor.execute("SELECT id_cancha FROM canchas")
                 ids_canchas = ["Todas"] + [str(row[0]) for row in cursor.fetchall()]
                 entrada_cancha["values"] = ids_canchas
@@ -174,7 +168,7 @@ def ventana_consultas(parent=None):
 
         limpiar_resultados()
 
-        # Consulta robusta uniendo reservas, clientes y canchas en MySQL
+        """Consulta robusta uniendo reservas, clientes y canchas en MySQL"""
         conexion = obtener_conexion()
         if conexion:
             try:
@@ -227,9 +221,7 @@ def ventana_consultas(parent=None):
                 cursor.close()
                 conexion.close()
 
-    # ------------------------------------------------
-    # BOTONES
-    # ------------------------------------------------
+    """------------------------------------------------BOTONES------------------------------------------------"""
 
     botones = tk.Frame(panel_der, pady=10)
     botones.pack(fill=tk.X)

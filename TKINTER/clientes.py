@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Agrega la carpeta raiz del proyecto al path de Python para encontrar BASE_DE_DATOS
+"""Agrega la carpeta raiz del proyecto al path de Python para encontrar BASE_DE_DATOS"""
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import tkinter as tk
@@ -11,13 +11,13 @@ from BASE_DE_DATOS.database import obtener_conexion
 import mysql.connector # Importamos por si usamos excepciones para los errores
 
 def ventana_clientes(parent=None):
-    # Se unificó el manejo de la ventana principal, manteniendo la compatibilidad tanto si se abre independiente como en solapas
+    """Se unificó el manejo de la ventana principal, manteniendo la compatibilidad tanto si se abre independiente como en solapas"""
     ventana = parent or tk.Toplevel()
     if parent is None:
         ventana.title("Gestión de Clientes")
         ventana.geometry("1280x720")
 
-    # Título principal
+    """Título principal"""
     titulo = tk.Label(
         ventana,
         text="Gestión de Clientes",
@@ -25,15 +25,15 @@ def ventana_clientes(parent=None):
     )
     titulo.pack(pady=(15, 10))
 
-    # Contenedor principal que divide en dos columnas
+    """Contenedor principal que divide en dos columnas"""
     contenedor = tk.Frame(ventana)
     contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    # ==================== PANEL IZQUIERDO: TABLA ====================
+    """==================== PANEL IZQUIERDO: TABLA ===================="""
     panel_izq = tk.Frame(contenedor, padx=5, pady=5)
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-    # Tabla que muestra los Clientes
+    """Tabla que muestra los Clientes"""
     columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email")
     tabla = ttk.Treeview(panel_izq, columns=columnas, show="headings")
     for col in columnas:
@@ -41,11 +41,11 @@ def ventana_clientes(parent=None):
         tabla.column(col, width=150)
     tabla.pack(fill=tk.BOTH, expand=True)
 
-    # ==================== PANEL DERECHO: FORMULARIO Y BOTONES ====================
+    """==================== PANEL DERECHO: FORMULARIO Y BOTONES ===================="""
     panel_der = tk.Frame(contenedor, padx=10, pady=5)
     panel_der.pack(side=tk.RIGHT, fill=tk.Y)
 
-    # Campos del formulario con diseño vertical apilado
+    """Campos del formulario con diseño vertical apilado"""
     tk.Label(panel_der, text="DNI:").pack(anchor="w")
     entrada_dni = tk.Entry(panel_der, width=30)
     entrada_dni.pack(fill=tk.X, pady=2)
@@ -62,7 +62,7 @@ def ventana_clientes(parent=None):
     entrada_email = tk.Entry(panel_der, width=30)
     entrada_email.pack(fill=tk.X, pady=2)
 
-    # Funciones internas
+    """Funciones internas"""
     def limpiar(): # Limpia los campos del formulario
         entrada_dni.delete(0, tk.END)
         entrada_nombre_apellido.delete(0, tk.END)
@@ -95,70 +95,80 @@ def ventana_clientes(parent=None):
         email = entrada_email.get().strip()
         patron_email = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
-        if not dni and not nombre_apellido and not telefono and not email: # Valida que no haya ningún campo sin dato
+        """Valida que no haya ningún campo sin dato"""
+        if not dni and not nombre_apellido and not telefono and not email: 
             messagebox.showerror(
                 "Datos incompletos",
                 "Debe completar los datos del cliente."
             )
             return 
-        
-        if not dni: # Valida DNI obligatorio
+
+        """Valida DNI obligatorio"""
+        if not dni: 
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar DNI"
             )
             return
 
-        if not nombre_apellido: # Valida nombre obligatorio
+        """Valida nombre obligatorio"""
+        if not nombre_apellido: 
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar nombre y apellido."
             )
             return
 
-        if not telefono: # Valida teléfono obligatorio
+        """Valida teléfono obligatorio"""
+        if not telefono:
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar el teléfono."
             )
             return
-        
-        if not email: # Valida email obligatorio
+
+        """Valida email obligatorio"""
+        if not email: 
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar email."
             )
             return
 
-        if not dni.isdigit(): # Valida que DNI sean números
+        """Valida que DNI sean números"""
+        if not dni.isdigit(): 
             messagebox.showerror(
                 "Error",
                 "El DNI debe contener sólo números."
             )
             return
 
-        if len(dni) < 7 or len(dni) > 8: # Valida la longitud del DNI
+        """Valida la longitud del DNI"""
+        if len(dni) < 7 or len(dni) > 8: 
             messagebox.showerror(
                 "Error",
                 "El DNI debe tener entre 7 y 8 dígitos."
             )
             return
-        
-        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+", nombre_apellido): # Valida nombre sólo letras
+
+        """Valida nombre sólo letras"""
+        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+", nombre_apellido): 
             messagebox.showerror(
                 "Error",
                 "Ingrese un nombre válido."
             )
             return
-        
-        if len(nombre_apellido) < 3: # Valida longitud de nombre y apellido
+
+        """Valida longitud de nombre y apellido"""
+        if len(nombre_apellido) < 3: 
             messagebox.showerror(
                 "Error",
                 "El nombre debe tener al menos 3 caracteres."
             )
             return
-        
-        if not telefono.isdigit(): # Valida teléfono sean números
+
+        """Valida teléfono sean números"""
+        if not telefono.isdigit():
             messagebox.showerror(
                 "Error",
                 "El teléfono debe contener sólo números."
@@ -171,15 +181,16 @@ def ventana_clientes(parent=None):
                 "El teléfono debe tener entre 8 y 15 dígitos."
             )
             return
-        
-        if not re.match(patron_email, email): # Valida email
+
+        """Valida email"""
+        if not re.match(patron_email, email): 
             messagebox.showerror(
                 "Error",
                 "Debe ingresar un mail válido."
             )
             return
         
-        # Inserta el cliente directamente en la Base de Datos MySQL
+        """Inserta el cliente directamente en la Base de Datos MySQL"""
         conexion = obtener_conexion()
         if conexion:
             try:
@@ -224,7 +235,7 @@ def ventana_clientes(parent=None):
             messagebox.showerror("Error", "Debe ingresar un mail válido.")
             return
 
-        # Actualiza el registro en la Base de Datos MySQL
+        """Actualiza el registro en la Base de Datos MySQL"""
         conexion = obtener_conexion()
         if conexion:
             try:
@@ -245,7 +256,8 @@ def ventana_clientes(parent=None):
                 cursor.close()
                 conexion.close()
 
-    def buscar(): # Busca registro por DNI en la base de datos y lo muestra en el formulario
+    """Busca registro por DNI en la base de datos y lo muestra en el formulario"""
+    def buscar(): 
         dni = entrada_dni.get().strip()
         if not dni:
             messagebox.showwarning("Buscar", "Ingrese un DNI para buscar.")
@@ -287,7 +299,7 @@ def ventana_clientes(parent=None):
             entrada_telefono.insert(0, valores[2])
             entrada_email.insert(0, valores[3])
 
-    # Vinculación del evento de selección en la tabla
+    """Vinculación del evento de selección en la tabla"""
     tabla.bind("<<TreeviewSelect>>", seleccionar_tabla)
 
     # Bloque de botones
@@ -322,10 +334,10 @@ def ventana_clientes(parent=None):
         width=15
     ).pack(pady=2)
 
-    # Carga inicial de datos en la tabla desde la base de datos
+    """Carga inicial de datos en la tabla desde la base de datos"""
     actualizar_tabla()
 
-    # Si se pasa un contenedor padre, empaqueta y retorna la ventana principal
+    """Si se pasa un contenedor padre, empaqueta y retorna la ventana principal"""
     if parent is not None:
         ventana.pack(fill=tk.BOTH, expand=True)
     return ventana

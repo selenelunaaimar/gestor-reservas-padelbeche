@@ -53,8 +53,7 @@ CREATE TABLE reservas (
         FOREIGN KEY (id_cancha)
         REFERENCES canchas(id_cancha),
 
-    -- La hora de finalización debe ser posterior
-    -- a la hora de inicio.
+    -- La hora de finalización debe ser posterior a la hora de inicio.
     CONSTRAINT chk_reservas_horario
         CHECK (hora_fin > hora_inicio),
 
@@ -133,15 +132,26 @@ DELIMITER ;
 -- Carga inicial de datos de prueba: Clientes
 INSERT INTO clientes (dni, nombre_apellido, telefono, email) VALUES
 ('30111222', 'Juan Perez', '3415551111', 'juan@gmail.com'),
-('35222333', 'Maria Gomez', '3415552222', 'maria@gmail.com'),
-('38444555', 'Carlos Lopez', '3415553333', 'carlos@gmail.com');
+('35222333', 'Maria Gimenez', '3415552222', 'maria@gmail.com'),
+('38444555', 'Carlos Lopez', '3415553333', 'carlos@gmail.com'),
+('40123456', 'Lucía Martínez', '3515554444', 'lucia@gmail.com'),
+('41234567', 'Esteban Quito', '3515555555', 'esteban@gmail.com'),
+('42345678', 'Sofía Benítez', '3515556666', 'sofia@gmail.com'),
+('43456789', 'Martín Gómez', '3515557777', 'martin@gmail.com'),
+('44567890', 'Carmen Ríos', '3515558888', 'carmen@gmail.com'),
+('45678901', 'Federico Díaz', '3515559999', 'federico@gmail.com'),
+('46789012', 'Valentina Sosa', '3515550000', 'valentina@gmail.com');
 
 -- Carga inicial de datos de prueba: Canchas
 INSERT INTO canchas (tipo_deporte, capacidad, precio_hora, estado) VALUES
 ('Padel', 4, 10000, 'Activa'),
 ('Padel', 4, 10000, 'Activa'),
 ('Futbol', 10, 25000, 'Activa'),
-('Futbol', 10, 25000, 'Inactiva');
+('Futbol', 10, 25000, 'Inactiva'),
+('Padel', 4, 12000, 'Activa'),
+('Padel', 4, 12000, 'Activa'),
+('Padel', 4, 10000, 'Activa'),
+('Padel', 4, 12000, 'Inactiva');
 
 -- Carga inicial de datos de prueba: Reservas
 INSERT INTO reservas (
@@ -153,6 +163,35 @@ INSERT INTO reservas (
     estado_reserva,
     vence_pago
 ) VALUES
-('30111222', 1, '2026-09-18', '18:00', '19:00', 'Confirmada', NULL),
-('35222333', 2, '2026-09-18', '19:00', '20:00', 'Pendiente', '2026-09-18 18:30:00'),
-('38444555', 1, '2026-09-19', '18:00', '19:00', 'Confirmada', NULL);
+('30111222', 1, '2026-10-16', '18:00', '19:00', 'Confirmada', NULL),
+('35222333', 2, '2026-10-16', '19:00', '20:00', 'Pendiente', '2026-10-16 18:30:00'),
+('38444555', 1, '2026-10-17', '18:00', '19:00', 'Confirmada', NULL),
+('40123456', 3, '2026-10-17', '14:00', '15:30', 'Confirmada', NULL),
+('41234567', 1, '2026-10-18', '16:00', '17:00', 'Pendiente', '2026-10-18 15:00:00'),
+('42345678', 2, '2026-10-18', '18:00', '19:00', 'Confirmada', NULL),
+('43456789', 5, '2026-10-19', '20:00', '21:30', 'Confirmada', NULL),
+('44567890', 2, '2026-10-19', '17:00', '18:00', 'Cancelada', NULL),
+('45678901', 1, '2026-10-20', '09:00', '10:00', 'Confirmada', NULL),
+('46789012', 3, '2026-10-20', '11:00', '12:30', 'Pendiente', '2026-10-20 10:00:00'),
+('44567890', 2, '2026-10-21', '17:00', '18:00', 'Cancelada', NULL),
+('45678901', 1, '2026-10-21', '09:00', '10:00', 'Confirmada', NULL),
+('46789012', 3, '2026-10-22', '11:00', '12:30', 'Confirmada', NULL),
+('30111222', 5, '2026-10-22', '13:00', '14:00', 'Pendiente', '2026-10-22 12:00:00'),
+('35222333', 6, '2026-10-23', '15:00', '16:00', 'Confirmada', NULL),
+('38444555', 7, '2026-10-23', '17:00', '18:00', 'Confirmada', NULL),
+('40123456', 1, '2026-10-24', '19:00', '20:00', 'Pendiente', '2026-10-24 18:00:00'),
+('41234567', 2, '2026-10-24', '21:00', '22:00', 'Cancelada', NULL),
+('42345678', 5, '2026-10-25', '19:00', '20:00', 'Confirmada', NULL),
+('43456789', 3, '2026-10-25', '20:30', '21:30', 'Cancelada', NULL),
+('44567890', 5, '2026-10-26', '14:00', '15:00', 'Confirmada', NULL),
+('45678901', 6, '2026-10-26', '17:00', '18:00', 'Confirmada', NULL),
+('46789012', 7, '2026-10-27', '18:00', '19:00', 'Confirmada', NULL),
+('30111222', 1, '2026-10-27', '20:00', '21:00', 'Pendiente', '2026-10-27 19:00:00'),
+('35222333', 2, '2026-10-28', '11:00', '12:00', 'Confirmada', NULL),
+('38444555', 3, '2026-10-28', '15:00', '16:00', 'Cancelada', NULL),
+('40123456', 5, '2026-10-29', '16:00', '17:00', 'Confirmada', NULL),
+('41234567', 6, '2026-10-29', '19:00', '20:00', 'Pendiente', '2026-10-29 18:00:00'),
+('42345678', 7, '2026-10-30', '10:00', '11:00', 'Confirmada', NULL),
+('43456789', 1, '2026-10-30', '13:00', '14:00', 'Cancelada', NULL),
+('42440440', 1, '2026-10-31', '10:00', '11:00', 'Confirmada', NULL),
+('42440440', 3, '2026-11-01', '15:00', '16:00', 'Cancelada', NULL);
