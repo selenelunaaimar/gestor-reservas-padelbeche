@@ -6,6 +6,7 @@ import tkinter as tk #importa la biblioteca gráfica Tkinter
 from datetime import datetime #obtiene la fecha y hora actuales
 from tkinter import messagebox, ttk
 from BASE_DE_DATOS.database import obtener_conexion
+import sesion 
 
 """VENTANA PRINCIPAL"""
 ventana = tk.Tk()
@@ -24,6 +25,8 @@ CREDENCIALES = {
     "Supervisor": "Admin2026",
     "Empleado": "1234Hola",
 }
+""" Agrego una variable de sesion para guardar el rol, y poder usarla en los demas modulos"""
+rol_actual = None
 
 ventana.configure(bg=FONDO)
 
@@ -207,6 +210,8 @@ def ingresar():
         entrada_contrasena.delete(0, tk.END)
         entrada_contrasena.focus_set()
         return
+    
+    sesion.rol_actual = rol #me guardo en sesion.py el rol
 
     pantalla_ingreso.destroy()
     barra_navegacion.pack(side="left", fill="y")

@@ -1,0 +1,1 @@
+rol_actual = None
