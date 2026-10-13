@@ -10,6 +10,7 @@ CREATE TABLE clientes (
     nombre_apellido VARCHAR(100) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
     email VARCHAR(100) NOT NULL
+    estado_cliente ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo'
 ) ENGINE = InnoDB;
 
 

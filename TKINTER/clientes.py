@@ -36,7 +36,7 @@ def ventana_clientes(parent=None):
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     """Tabla que muestra los Clientes"""
-    columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email")
+    columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email", "Estado")
     tabla = ttk.Treeview(panel_izq, columns=columnas, show="headings")
     for col in columnas:
         tabla.heading(col, text=col)
@@ -80,7 +80,10 @@ def ventana_clientes(parent=None):
         if conexion:
             try:
                 cursor = conexion.cursor()
-                cursor.execute("SELECT dni, nombre_apellido, telefono, email FROM clientes")
+                consulta = "SELECT dni, nombre_apellido, telefono, email, estado_cliente FROM clientes"
+                if not es_supervisor:
+                    consulta += " WHERE estado_cliente = 'Activo'"
+                cursor.execute(consulta)
                 registros = cursor.fetchall()
                 for cliente in registros:
                     tabla.insert("", tk.END, values=cliente)
@@ -264,7 +267,63 @@ def ventana_clientes(parent=None):
             finally:
                 cursor.close()
                 conexion.close()
+    def dar_baja():
+        if not es_supervisor:
+            messagebox.showerror(
+                "Permiso denegado",
+                "Solo Supervisor puede dar de baja clientes."
+            )
+            return
 
+        dni = entrada_dni.get().strip()
+        if not dni:
+            messagebox.showwarning(
+                "Cliente",
+                "Seleccione un cliente de la tabla primero."
+            )
+            return
+
+        if not messagebox.askyesno(
+            "Confirmar baja",
+            f"¿Desea dar de baja al cliente con DNI {dni}?"
+        ):
+            return
+
+        conexion = None
+        cursor = None
+        try:
+            conexion = obtener_conexion()
+            cursor = conexion.cursor()
+            cursor.execute(
+                """
+                UPDATE clientes
+                SET estado_cliente = 'Inactivo'
+                WHERE dni = %s AND estado_cliente = 'Activo'
+                """,
+                (dni,)
+            )
+            conexion.commit()
+
+            if cursor.rowcount > 0:
+                actualizar_tabla()
+                limpiar()
+                messagebox.showinfo("Cliente", "Cliente dado de baja.")
+            else:
+                messagebox.showinfo(
+                    "Cliente",
+                    "No se encontró un cliente activo con ese DNI."
+                )
+
+        except mysql.connector.Error as err:
+            if conexion is not None:
+                conexion.rollback()
+            messagebox.showerror("Error", f"No se pudo dar de baja al cliente:\n{err}")
+
+        finally:
+            if cursor is not None:
+                cursor.close()
+            if conexion is not None and conexion.is_connected():
+                conexion.close()
     """Busca registro por DNI en la base de datos y lo muestra en el formulario"""
     def buscar(): 
         dni = entrada_dni.get().strip()
@@ -325,8 +384,8 @@ def ventana_clientes(parent=None):
     if es_supervisor:
         tk.Button(
             botones,
-            text="Modificar",
-            command=modificar,
+            text="Dar de baja",
+            command=dar_baja,
             width=15
         ).pack(pady=2)
 
