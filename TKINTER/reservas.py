@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import tkinter as tk
 from tkinter import messagebox, ttk
 from BASE_DE_DATOS.database import obtener_conexion
+import sesion
 
 """Minutos que tiene el cliente para pagar una reserva Pendiente"""
 MINUTOS_PAGO = 15
@@ -31,7 +32,7 @@ def ventana_reservas(parent=None):
     contenedor = tk.Frame(ventana)
     contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    """=========================PANEL IZQUIERDO: Tabla de Resultados========================="""
+    """----------------------------------PANEL IZQUIERDO: Tabla de Resultados--------------------------------------"""
     panel_izq = tk.Frame(contenedor, padx=5, pady=5)
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
@@ -71,7 +72,7 @@ def ventana_reservas(parent=None):
     """Estilo para reservas pendientes con el plazo de pago vencido"""
     tabla.tag_configure("vencida", background="#f8d7da", foreground="#842029")
 
-    """=========================PANEL DERECHO: Formulario y Botones========================="""
+    """---------------------------------------PANEL DERECHO: Formulario y Botones--------------------------------------"""
     panel_der = tk.Frame(contenedor, padx=10, pady=5)
     panel_der.pack(side=tk.RIGHT, fill=tk.Y)
 
@@ -92,7 +93,7 @@ def ventana_reservas(parent=None):
     )
     entrada_nombre_cliente.pack(fill=tk.X, pady=2)
 
-    """=========================FUNCIONES DE APOYO Y LÓGICA========================="""
+    """-------------------------------------FUNCIONES DE APOYO Y LÓGICA----------------------------------------------"""
 
     def buscar_nombre_cliente(dni):
         """Busca en la base de datos de clientes y retorna el nombre y apellido directamente"""
@@ -607,7 +608,7 @@ def ventana_reservas(parent=None):
 
     tabla.bind("<<TreeviewSelect>>", seleccionar_tabla)
 
-    """=========================ALERTA DE PAGO VENCIDO========================="""
+    """--------------------------------------------ALERTA DE PAGO VENCIDO---------------------------------------------"""
     avisadas = set()  # reservas por las que ya se mostro el aviso
 
     def verificar_vencidas():
@@ -692,14 +693,15 @@ def ventana_reservas(parent=None):
         botones, text="Modificar", command=modificar, width=15
     ).pack(pady=3)
     tk.Button(
-        botones, text="Eliminar", command=eliminar, width=15
-    ).pack(pady=3)
-    tk.Button(
         botones, text="Buscar", command=buscar, width=15
     ).pack(pady=3)
     tk.Button(
         botones, text="Limpiar", command=limpiar, width=15
     ).pack(pady=3)
+    if sesion.rol_actual == "Supervisor":
+        tk.Button(
+            botones, text="Eliminar", command=eliminar, width=15
+        ).pack(pady=3)
 
     """Inicialización de vistas"""
     actualizar_campo_nombre()
