@@ -9,10 +9,12 @@ from tkinter import ttk, messagebox
 import re
 from BASE_DE_DATOS.database import obtener_conexion
 import mysql.connector # Importamos por si usamos excepciones para los errores
+import sesion
 
 def ventana_clientes(parent=None):
     """Se unificó el manejo de la ventana principal, manteniendo la compatibilidad tanto si se abre independiente como en solapas"""
     ventana = parent or tk.Toplevel()
+    es_supervisor = sesion.rol_actual == "Supervisor"
     if parent is None:
         ventana.title("Gestión de Clientes")
         ventana.geometry("1280x720")
@@ -209,6 +211,13 @@ def ventana_clientes(parent=None):
                 conexion.close()
 
     def modificar():
+        if not es_supervisor:
+            messagebox.showerror(
+              "Permiso denegado",
+              "Solo Supervisor puede modificar clientes."
+            )
+            return
+        
         dni = entrada_dni.get().strip()
         nombre_apellido = entrada_nombre_apellido.get().strip()
         telefono = entrada_telefono.get().strip()
@@ -313,12 +322,13 @@ def ventana_clientes(parent=None):
         width=15
     ).pack(pady=2)
 
-    tk.Button(
-        botones,
-        text="Modificar",
-        command=modificar,
-        width=15
-    ).pack(pady=2)
+    if es_supervisor:
+        tk.Button(
+            botones,
+            text="Modificar",
+            command=modificar,
+            width=15
+        ).pack(pady=2)
 
     tk.Button(
         botones,
