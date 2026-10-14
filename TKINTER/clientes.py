@@ -36,7 +36,7 @@ def ventana_clientes(parent=None):
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     """Tabla que muestra los Clientes"""
-    columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email", "Estado")
+    columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email")
     tabla = ttk.Treeview(panel_izq, columns=columnas, show="headings")
     for col in columnas:
         tabla.heading(col, text=col)
@@ -80,10 +80,9 @@ def ventana_clientes(parent=None):
         if conexion:
             try:
                 cursor = conexion.cursor()
-                consulta = "SELECT dni, nombre_apellido, telefono, email, estado_cliente FROM clientes"
-                if not es_supervisor:
-                    consulta += " WHERE estado_cliente = 'Activo'"
-                cursor.execute(consulta)
+                cursor.execute(
+                     "SELECT dni, nombre_apellido, telefono, email FROM clientes"
+                    )
                 registros = cursor.fetchall()
                 for cliente in registros:
                     tabla.insert("", tk.END, values=cliente)
@@ -267,11 +266,11 @@ def ventana_clientes(parent=None):
             finally:
                 cursor.close()
                 conexion.close()
-    def dar_baja():
+    def eliminar():
         if not es_supervisor:
             messagebox.showerror(
                 "Permiso denegado",
-                "Solo Supervisor puede dar de baja clientes."
+                "Solo Supervisor puede eliminar clientes."
             )
             return
 
@@ -284,8 +283,8 @@ def ventana_clientes(parent=None):
             return
 
         if not messagebox.askyesno(
-            "Confirmar baja",
-            f"¿Desea dar de baja al cliente con DNI {dni}?"
+            "Confirmar eliminación",
+            f"¿Desea eliminar al cliente con DNI {dni}?"
         ):
             return
 
@@ -293,36 +292,40 @@ def ventana_clientes(parent=None):
         cursor = None
         try:
             conexion = obtener_conexion()
+            if not conexion:
+                messagebox.showerror("Error", "No se pudo conectar a la base de datos.")
+                return
+
             cursor = conexion.cursor()
             cursor.execute(
-                """
-                UPDATE clientes
-                SET estado_cliente = 'Inactivo'
-                WHERE dni = %s AND estado_cliente = 'Activo'
-                """,
+                "DELETE FROM clientes WHERE dni = %s",
                 (dni,)
             )
-            conexion.commit()
 
-            if cursor.rowcount > 0:
-                actualizar_tabla()
-                limpiar()
-                messagebox.showinfo("Cliente", "Cliente dado de baja.")
-            else:
-                messagebox.showinfo(
+            if cursor.rowcount == 0:
+                messagebox.showwarning(
                     "Cliente",
-                    "No se encontró un cliente activo con ese DNI."
+                    "No se encontró un cliente con ese DNI."
                 )
+                return
+
+            conexion.commit()
+            actualizar_tabla()
+            limpiar()
+            messagebox.showinfo("Cliente", "Cliente eliminado.")
 
         except mysql.connector.Error as err:
             if conexion is not None:
                 conexion.rollback()
-            messagebox.showerror("Error", f"No se pudo dar de baja al cliente:\n{err}")
+            messagebox.showerror(
+                "No se pudo eliminar",
+                f"{err}"
+            )
 
         finally:
             if cursor is not None:
                 cursor.close()
-            if conexion is not None and conexion.is_connected():
+            if conexion is not None:
                 conexion.close()
     """Busca registro por DNI en la base de datos y lo muestra en el formulario"""
     def buscar(): 
@@ -385,7 +388,7 @@ def ventana_clientes(parent=None):
         tk.Button(
             botones,
             text="Dar de baja",
-            command=dar_baja,
+            command=eliminar,
             width=15
         ).pack(pady=2)
 

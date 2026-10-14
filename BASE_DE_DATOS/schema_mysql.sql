@@ -10,7 +10,6 @@ CREATE TABLE clientes (
     nombre_apellido VARCHAR(100) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
     email VARCHAR(100) NOT NULL
-    estado_cliente ENUM('Activo', 'Inactivo') NOT NULL DEFAULT 'Activo'
 ) ENGINE = InnoDB;
 
 
@@ -129,6 +128,24 @@ END//
 
 DELIMITER ;
 
+DELIMITER //
+
+CREATE TRIGGER validar_eliminacion_cliente
+BEFORE DELETE ON clientes
+FOR EACH ROW
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM reservas
+        WHERE dni_cliente = OLD.dni
+    ) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT =
+            'No se puede eliminar un cliente que tiene reservas asociadas.';
+    END IF;
+END//
+
+DELIMITER ;
 
 -- Carga inicial de datos de prueba: Clientes
 INSERT INTO clientes (dni, nombre_apellido, telefono, email) VALUES
