@@ -170,6 +170,8 @@ def ventana_reservas(parent=None):
         entrada_nombre_cliente.config(state="readonly")
 
     def actualizar_tabla():
+        if not ventana.winfo_exists():
+            return
         for item in tabla.get_children():
             tabla.delete(item)
 
@@ -614,6 +616,8 @@ def ventana_reservas(parent=None):
     def verificar_vencidas():
         """Busca reservas Pendientes con el plazo de pago vencido,
         las resalta en la tabla y avisa una sola vez por cada una."""
+        if not ventana.winfo_exists():
+            return
         try:
             conexion = obtener_conexion()
             cursor = conexion.cursor(dictionary=True)
