@@ -1,9 +1,19 @@
-import mysql.connector
 from datetime import datetime, timedelta
 import tkinter as tk
 from tkinter import messagebox, ttk
-from BASE_DE_DATOS.database import obtener_conexion
+from modelo_reservas import (
+    obtener_canchas_activas_db,
+    obtener_reservas_db,
+    buscar_nombre_cliente_db,
+    obtener_id_libre_db,
+    insertar_reserva_db,
+    actualizar_reserva_db,
+    eliminar_reserva_db,
+    obtener_pendientes_db
+)
 import sesion
+import mysql.connector
+from BASE_DE_DATOS.database import obtener_conexion
 
 """Minutos que tiene el cliente para pagar una reserva Pendiente"""
 MINUTOS_PAGO = 15
@@ -53,7 +63,7 @@ def ventana_reservas(parent=None):
     tabla.heading("Cliente", text="DNI Cliente")
     tabla.heading("Nombre", text="Nombre y Apellido")
     tabla.heading("Cancha", text="Cancha")
-    tabla.heading("Fecha", text="Fecha")
+    tabla.heading("Fecha", text="Fecha (DD/MM/AAAA)")
     tabla.heading("Inicio", text="Hora Inicio")
     tabla.heading("Fin", text="Hora Fin")
     tabla.heading("Estado", text="Estado")
@@ -61,8 +71,8 @@ def ventana_reservas(parent=None):
     tabla.column("id", width=80)
     tabla.column("Cliente", width=90)
     tabla.column("Nombre", width=140)
-    tabla.column("Cancha", width=70)
-    tabla.column("Fecha", width=90)
+    tabla.column("Cancha", width=110)
+    tabla.column("Fecha", width=100)
     tabla.column("Inicio", width=80)
     tabla.column("Fin", width=80)
     tabla.column("Estado", width=90)
@@ -95,21 +105,6 @@ def ventana_reservas(parent=None):
 
     """-------------------------------------FUNCIONES DE APOYO Y LÓGICA----------------------------------------------"""
 
-    def buscar_nombre_cliente(dni):
-        """Busca en la base de datos de clientes y retorna el nombre y apellido directamente"""
-        try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor(dictionary=True)
-            cursor.execute("SELECT nombre_apellido FROM clientes WHERE dni = %s", (dni,))
-            resultado = cursor.fetchone()
-            cursor.close()
-            conexion.close()
-            if resultado:
-                return resultado["nombre_apellido"]
-        except Exception:
-            pass
-        return "No registrado"
-
     def actualizar_campo_nombre(event=None):
         dni = entrada_cliente.get().strip()
         entrada_nombre_cliente.config(state="normal")
@@ -117,20 +112,30 @@ def ventana_reservas(parent=None):
         if not dni:
             entrada_nombre_cliente.insert(0, "Ingrese DNI")
         else:
-            nombre = buscar_nombre_cliente(dni)
-            entrada_nombre_cliente.insert(0, nombre)
+            nombre = buscar_nombre_cliente_db(dni)
+            entrada_nombre_cliente.insert(0, nombre if nombre else "No registrado")
         entrada_nombre_cliente.config(state="readonly")
 
     """Enlaza el campo DNI para que actualice el nombre en tiempo real"""
     entrada_cliente.bind("<KeyRelease>", actualizar_campo_nombre)
 
-    """Cancha"""
-    tk.Label(panel_der, text="ID Cancha:").pack(anchor="w")
-    entrada_cancha = tk.Entry(panel_der)
-    entrada_cancha.pack(fill=tk.X, pady=2)
+    """Combobox de Canchas Activas"""
+    tk.Label(panel_der, text="Cancha Activa:").pack(anchor="w")
+    combo_cancha = ttk.Combobox(panel_der, state="readonly")
+    combo_cancha.pack(fill=tk.X, pady=2)
 
-    """Fecha"""
-    tk.Label(panel_der, text="Fecha (AAAA-MM-DD):").pack(anchor="w")
+    def cargar_canchas_activas():
+        canchas = obtener_canchas_activas_db()
+        mapeo = {f"ID {c['id_cancha']} - {c['tipo_deporte']} (Cap: {c['capacidad']})": c['id_cancha'] for c in canchas}
+        combo_cancha['values'] = list(mapeo.keys())
+        combo_cancha.mapeo_canchas = mapeo
+        if mapeo:
+            combo_cancha.current(0)
+
+    cargar_canchas_activas()
+
+    """Fecha en formato DD/MM/AAAA"""
+    tk.Label(panel_der, text="Fecha (DD/MM/AAAA):").pack(anchor="w")
     entrada_fecha = tk.Entry(panel_der)
     entrada_fecha.pack(fill=tk.X, pady=2)
 
@@ -157,7 +162,8 @@ def ventana_reservas(parent=None):
     def limpiar():
         entrada_id.delete(0, tk.END)
         entrada_cliente.delete(0, tk.END)
-        entrada_cancha.delete(0, tk.END)
+        if combo_cancha['values']:
+            combo_cancha.current(0)
         entrada_fecha.delete(0, tk.END)
         entrada_inicio.delete(0, tk.END)
         entrada_fin.delete(0, tk.END)
@@ -169,6 +175,24 @@ def ventana_reservas(parent=None):
         entrada_nombre_cliente.insert(0, "Ingrese DNI")
         entrada_nombre_cliente.config(state="readonly")
 
+    def convertir_fecha_a_bd(fecha_str):
+        """Convierte de DD/MM/AAAA a AAAA-MM-DD para la base de datos"""
+        try:
+            dt = datetime.strptime(fecha_str.strip(), "%d/%m/%Y")
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            return None
+
+    def convertir_fecha_a_pantalla(fecha_db):
+        """Convierte de AAAA-MM-DD a DD/MM/AAAA para mostrar en el formulario"""
+        try:
+            if hasattr(fecha_db, "strftime"):
+                return fecha_db.strftime("%d/%m/%Y")
+            partes = str(fecha_db).split("-")
+            return f"{partes[2]}/{partes[1]}/{partes[0]}" if len(partes) == 3 else str(fecha_db)
+        except Exception:
+            return str(fecha_db)
+
     def actualizar_tabla():
         if not ventana.winfo_exists():
             return
@@ -176,22 +200,10 @@ def ventana_reservas(parent=None):
             tabla.delete(item)
 
         try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor(dictionary=True)
-            cursor.execute("""
-                SELECT r.id_reserva AS id, r.dni_cliente AS cliente, c.nombre_apellido AS nombre,
-                       r.id_cancha AS cancha, r.fecha, TIME_FORMAT(r.hora_inicio, '%H:%i') AS inicio,
-                       TIME_FORMAT(r.hora_fin, '%H:%i') AS fin, r.estado_reserva AS estado
-                FROM reservas r
-                JOIN clientes c ON r.dni_cliente = c.dni
-                ORDER BY r.fecha, r.hora_inicio
-            """)
-            lista_reservas = cursor.fetchall()
-            cursor.close()
-            conexion.close()
+            lista_reservas = obtener_reservas_db()
 
             for reserva in lista_reservas:
-                fecha_str = reserva["fecha"].strftime("%Y-%m-%d") if hasattr(reserva["fecha"], "strftime") else str(reserva["fecha"])
+                fecha_mostrar = convertir_fecha_a_pantalla(reserva["fecha"])
                 tabla.insert(
                     "",
                     tk.END,
@@ -199,8 +211,8 @@ def ventana_reservas(parent=None):
                         reserva["id"],
                         reserva["cliente"],
                         reserva["nombre"],
-                        reserva["cancha"],
-                        fecha_str,
+                        f"ID {reserva['cancha']}",
+                        fecha_mostrar,
                         reserva["inicio"],
                         reserva["fin"],
                         reserva["estado"],
@@ -218,96 +230,19 @@ def ventana_reservas(parent=None):
         except ValueError:
             return None
 
-    def validar_fecha(fecha_str):
-        try:
-            datetime.strptime(fecha_str, "%Y-%m-%d")
-            return True
-        except ValueError:
-            return False
-
-    def existe_superposicion(cancha, fecha, inicio, fin, id_excluir=None):
-        """'id_excluir' permite que la funcion Modificar ignore la reserva actual al verificar si la cancha se cruza consigo misma"""
-        inicio_nuevo = convertir_hora(inicio)
-        fin_nuevo = convertir_hora(fin)
-
-        if inicio_nuevo is None or fin_nuevo is None:
-            return True
-
-        try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor(dictionary=True)
-            cursor.execute("""
-                SELECT id_reserva AS id, id_cancha AS cancha, fecha,
-                       TIME_FORMAT(hora_inicio, '%H:%i') AS inicio,
-                       TIME_FORMAT(hora_fin, '%H:%i') AS fin, estado_reserva AS estado
-                FROM reservas
-                WHERE id_cancha = %s AND fecha = %s AND estado_reserva != 'Cancelada'
-            """, (cancha, fecha))
-            registros = cursor.fetchall()
-            cursor.close()
-            conexion.close()
-
-            for reserva in registros:
-                """Si estamos modificando, saltamos el registro que posee el mismo ID"""
-                if id_excluir and str(reserva["id"]) == str(id_excluir):
-                    continue
-
-                inicio_existente = convertir_hora(reserva["inicio"])
-                fin_existente = convertir_hora(reserva["fin"])
-
-                if (
-                    inicio_nuevo < fin_existente
-                    and fin_nuevo > inicio_existente
-                ):
-                    return True
-        except Exception:
-            pass
-
-        return False
-
     def calcular_vencimiento():
         """El cliente tiene MINUTOS_PAGO minutos desde que se hace la reserva."""
         return datetime.now() + timedelta(minutes=MINUTOS_PAGO)
-
-    def obtener_id_libre():
-        """Devuelve el menor ID de reserva que no este en uso (reutiliza huecos)."""
-        conexion = obtener_conexion()
-        cursor = conexion.cursor()
-        cursor.execute("SELECT id_reserva FROM reservas ORDER BY id_reserva")
-        ids_usados = {fila[0] for fila in cursor.fetchall()}
-        cursor.close()
-        conexion.close()
-
-        id_libre = 1
-        while id_libre in ids_usados:
-            id_libre += 1
-        return id_libre
-
-    def obtener_estado_cancha(id_cancha):
-        """Devuelve 'Activa', 'Inactiva' o None si la cancha no existe."""
-        try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor(dictionary=True)
-            cursor.execute(
-                "SELECT estado FROM canchas WHERE id_cancha = %s", (id_cancha,)
-            )
-            resultado = cursor.fetchone()
-            cursor.close()
-            conexion.close()
-            return resultado["estado"] if resultado else None
-        except Exception:
-            return None
 
     def validar_formulario(requiere_id):
         """
         Lee y valida los campos del formulario.
         Devuelve un diccionario con los datos limpios, o None si hay error
-        (en ese caso ya mostro el mensaje al usuario).
         """
         id_reserva = entrada_id.get().strip()
         cliente = entrada_cliente.get().strip()
-        cancha = entrada_cancha.get().strip()
-        fecha = entrada_fecha.get().strip()
+        seleccion_cancha = combo_cancha.get()
+        fecha_usuario = entrada_fecha.get().strip()
         inicio = entrada_inicio.get().strip()
         fin = entrada_fin.get().strip()
         estado = entrada_estado.get().strip()
@@ -322,7 +257,7 @@ def ventana_reservas(parent=None):
                 messagebox.showerror("Error", "El ID de reserva debe ser un número.")
                 return None
 
-        if not (cliente and cancha and fecha and inicio and fin and estado):
+        if not (cliente and seleccion_cancha and fecha_usuario and inicio and fin and estado):
             messagebox.showwarning(
                 "Datos incompletos", "Complete todos los campos obligatorios."
             )
@@ -340,23 +275,25 @@ def ventana_reservas(parent=None):
             )
             return None
 
-        if buscar_nombre_cliente(cliente) == "No registrado":
+        if buscar_nombre_cliente_db(cliente) is None:
             messagebox.showerror(
                 "Cliente inexistente",
                 "No hay ningún cliente registrado con ese DNI.",
             )
             return None
 
-        if not cancha.isdigit() or int(cancha) <= 0:
-            messagebox.showerror(
-                "Error", "El ID de la cancha debe ser un número mayor a cero."
-            )
+        """Obtenemos el ID de la cancha seleccionada en el Combobox"""
+        id_cancha_real = combo_cancha.mapeo_canchas.get(seleccion_cancha)
+        if not id_cancha_real:
+            messagebox.showerror("Error", "Seleccione una cancha activa válida.")
             return None
 
-        if not validar_fecha(fecha):
+        """Validación y conversión de fecha DD/MM/AAAA a AAAA-MM-DD"""
+        fecha_bd = convertir_fecha_a_bd(fecha_usuario)
+        if not fecha_bd:
             messagebox.showerror(
                 "Error de formato",
-                "La fecha debe tener el formato AAAA-MM-DD (ej: 2026-09-25).",
+                "La fecha debe tener el formato DD/MM/AAAA (ej: 25/09/2026).",
             )
             return None
 
@@ -375,8 +312,8 @@ def ventana_reservas(parent=None):
         return {
             "id": id_reserva,
             "cliente": cliente,
-            "cancha": int(cancha),
-            "fecha": fecha,
+            "cancha": id_cancha_real,
+            "fecha": fecha_bd,
             "inicio": inicio,
             "fin": fin,
             "estado": estado,
@@ -392,32 +329,19 @@ def ventana_reservas(parent=None):
         if datos["estado"] == "Pendiente":
             vence = calcular_vencimiento()
 
-        """Los triggers de MySQL validan cancha activa y superposicion"""
+        """Los triggers de MySQL validan superposicion automaticamente"""
         try:
-            id_libre = obtener_id_libre()
-            conexion = obtener_conexion()
-            cursor = conexion.cursor()
-            cursor.execute(
-                """
-                INSERT INTO reservas
-                    (id_reserva, dni_cliente, id_cancha, fecha, hora_inicio,
-                     hora_fin, estado_reserva, vence_pago)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    id_libre,
-                    datos["cliente"],
-                    datos["cancha"],
-                    datos["fecha"],
-                    datos["inicio"],
-                    datos["fin"],
-                    datos["estado"],
-                    vence,
-                ),
+            id_libre = obtener_id_libre_db()
+            insertar_reserva_db(
+                id_libre,
+                datos["cliente"],
+                datos["cancha"],
+                datos["fecha"],
+                datos["inicio"],
+                datos["fin"],
+                datos["estado"],
+                vence
             )
-            conexion.commit()
-            cursor.close()
-            conexion.close()
 
             actualizar_tabla()
             limpiar()
@@ -432,13 +356,13 @@ def ventana_reservas(parent=None):
         if datos is None:
             return
 
-        """Traemos la reserva actual para saber su estado, cancha y vencimiento"""
+        """Traemos la reserva actual para saber su estado y vencimiento"""
         try:
             conexion = obtener_conexion()
             cursor = conexion.cursor(dictionary=True)
             cursor.execute(
                 """
-                SELECT id_cancha, estado_reserva, vence_pago
+                SELECT estado_reserva, vence_pago
                 FROM reservas WHERE id_reserva = %s
                 """,
                 (datos["id"],),
@@ -456,34 +380,7 @@ def ventana_reservas(parent=None):
             messagebox.showwarning("Modificar", "No se encontró una reserva con ese ID.")
             return
 
-        if datos["estado"] != "Cancelada":
-            """validamos la cancha activa (solo si cambia de cancha) y la superposicion."""
-            if datos["cancha"] != actual["id_cancha"]:
-                estado_cancha = obtener_estado_cancha(datos["cancha"])
-                if estado_cancha is None:
-                    messagebox.showerror("Error", "La cancha indicada no existe.")
-                    return
-                if estado_cancha != "Activa":
-                    messagebox.showerror(
-                        "Cancha inactiva",
-                        "No se puede reservar una cancha inactiva.",
-                    )
-                    return
-
-            if existe_superposicion(
-                datos["cancha"],
-                datos["fecha"],
-                datos["inicio"],
-                datos["fin"],
-                id_excluir=datos["id"],
-            ):
-                messagebox.showerror(
-                    "Cancha ocupada",
-                    "La cancha ya se encuentra reservada en ese horario por otra reserva.",
-                )
-                return
-
-        """Vencimiento: solo las Pendientes lo tienen. Si ya era Pendiente y conserva su vencimiento, se mantiene."""
+        """Vencimiento: solo las Pendientes lo tienen."""
         vence = None
         if datos["estado"] == "Pendiente":
             if actual["estado_reserva"] == "Pendiente" and actual["vence_pago"]:
@@ -492,30 +389,16 @@ def ventana_reservas(parent=None):
                 vence = calcular_vencimiento()
 
         try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor()
-            cursor.execute(
-                """
-                UPDATE reservas
-                SET dni_cliente = %s, id_cancha = %s, fecha = %s,
-                    hora_inicio = %s, hora_fin = %s,
-                    estado_reserva = %s, vence_pago = %s
-                WHERE id_reserva = %s
-                """,
-                (
-                    datos["cliente"],
-                    datos["cancha"],
-                    datos["fecha"],
-                    datos["inicio"],
-                    datos["fin"],
-                    datos["estado"],
-                    vence,
-                    datos["id"],
-                ),
+            actualizar_reserva_db(
+                datos["cliente"],
+                datos["cancha"],
+                datos["fecha"],
+                datos["inicio"],
+                datos["fin"],
+                datos["estado"],
+                vence,
+                datos["id"]
             )
-            conexion.commit()
-            cursor.close()
-            conexion.close()
 
             actualizar_tabla()
             limpiar()
@@ -527,17 +410,17 @@ def ventana_reservas(parent=None):
 
     def buscar():
         id_reserva = entrada_id.get().strip()
-        if not id_reserva:
-            messagebox.showwarning("Atención", "Ingrese un ID de reserva para buscar.")
+        if not id_reserva or not id_reserva.isdigit():
+            messagebox.showwarning("Atención", "Ingrese un ID numérico de reserva para buscar.")
             return
 
         try:
             conexion = obtener_conexion()
             cursor = conexion.cursor(dictionary=True)
             cursor.execute("""
-                SELECT id_reserva AS id, dni_cliente AS cliente, id_cancha AS cancha, fecha,
-                       TIME_FORMAT(hora_inicio, '%H:%i') AS inicio,
-                       TIME_FORMAT(hora_fin, '%H:%i') AS fin, estado_reserva AS estado
+                SELECT id_reserva AS id, dni_cliente AS cliente, id_cancha AS cancha, fecha, 
+                       TIME_FORMAT(hora_inicio, '%H:%i') AS inicio, 
+                       TIME_FORMAT(hora_fin, '%H:%i') AS fin, estado_reserva AS estado 
                 FROM reservas WHERE id_reserva = %s
             """, (id_reserva,))
             reserva = cursor.fetchone()
@@ -549,9 +432,14 @@ def ventana_reservas(parent=None):
                 entrada_id.insert(0, reserva["id"])
                 entrada_cliente.insert(0, reserva["cliente"])
                 actualizar_campo_nombre()
-                entrada_cancha.insert(0, reserva["cancha"])
-                fecha_str = reserva["fecha"].strftime("%Y-%m-%d") if hasattr(reserva["fecha"], "strftime") else str(reserva["fecha"])
-                entrada_fecha.insert(0, fecha_str)
+                
+                """Seleccionar la cancha en el combobox"""
+                for idx, texto in enumerate(combo_cancha['values']):
+                    if combo_cancha.mapeo_canchas[texto] == reserva["cancha"]:
+                        combo_cancha.current(idx)
+                        break
+
+                entrada_fecha.insert(0, convertir_fecha_a_pantalla(reserva["fecha"]))
                 entrada_inicio.insert(0, reserva["inicio"])
                 entrada_fin.insert(0, reserva["fin"])
                 entrada_estado.set(reserva["estado"])
@@ -579,13 +467,7 @@ def ventana_reservas(parent=None):
             return
 
         try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor()
-            cursor.execute("DELETE FROM reservas WHERE id_reserva = %s", (id_reserva,))
-            conexion.commit()
-            cursor.close()
-            conexion.close()
-
+            eliminar_reserva_db(id_reserva)
             actualizar_tabla()
             limpiar()
             messagebox.showinfo("Éxito", "Reserva eliminada correctamente.")
@@ -602,7 +484,14 @@ def ventana_reservas(parent=None):
             entrada_id.insert(0, valores[0])
             entrada_cliente.insert(0, valores[1])
             actualizar_campo_nombre()
-            entrada_cancha.insert(0, valores[3])
+            
+            """Buscar la cancha correspondiente en el combobox según el ID mostrado"""
+            cancha_texto_tabla = str(valores[3]) # ej: "ID 1"
+            for idx, texto in enumerate(combo_cancha['values']):
+                if cancha_texto_tabla in texto:
+                    combo_cancha.current(idx)
+                    break
+
             entrada_fecha.insert(0, valores[4])
             entrada_inicio.insert(0, valores[5])
             entrada_fin.insert(0, valores[6])
@@ -616,68 +505,59 @@ def ventana_reservas(parent=None):
     def verificar_vencidas():
         """Busca reservas Pendientes con el plazo de pago vencido,
         las resalta en la tabla y avisa una sola vez por cada una."""
-        if not ventana.winfo_exists():
-            return
         try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor(dictionary=True)
-            cursor.execute("""
-                SELECT r.id_reserva AS id, c.nombre_apellido AS nombre,
-                       r.id_cancha AS cancha, r.fecha,
-                       TIME_FORMAT(r.hora_inicio, '%H:%i') AS inicio,
-                       r.vence_pago
-                FROM reservas r
-                JOIN clientes c ON r.dni_cliente = c.dni
-                WHERE r.estado_reserva = 'Pendiente'
-                ORDER BY r.vence_pago
-            """)
-            pendientes = cursor.fetchall()
-            cursor.close()
-            conexion.close()
+            """Validar que tanto la ventana como la tabla sigan vivas antes de interactuar"""
+            if not ventana.winfo_exists() or not tabla.winfo_exists():
+                return
+            
+            pendientes = obtener_pendientes_db()
+            if pendientes is None:
+                return
+
+            """La comparacion se hace en Python, con la misma hora con la que se calculo el vencimiento al guardar."""
+            ahora = datetime.now()
+            vencidas = [
+                r for r in pendientes
+                if r["vence_pago"] and r["vence_pago"] <= ahora
+            ]
+            ids_vencidas = {r["id"] for r in vencidas}
+
+            """Resaltar filas sin reconstruir la tabla"""
+            for fila in tabla.get_children():
+                id_fila = int(tabla.item(fila)["values"][0])
+                tabla.item(
+                    fila, tags=("vencida",) if id_fila in ids_vencidas else ()
+                )
+
+            """Cartel permanente mientras haya reservas vencidas"""
+            if vencidas:
+                lbl_alerta.config(
+                    text=f"⚠ {len(vencidas)} reserva(s) pendiente(s) con el plazo de pago vencido"
+                )
+            else:
+                lbl_alerta.config(text="")
+
+            """Aviso emergente: una sola vez por reserva"""
+            nuevas = [r for r in vencidas if r["id"] not in avisadas]
+            avisadas.intersection_update(ids_vencidas)  # olvida las ya resueltas
+            if nuevas:
+                avisadas.update(r["id"] for r in nuevas)
+                detalle = "\n".join(
+                    f"• Reserva {r['id']} - {r['nombre']} - Cancha {r['cancha']} "
+                    f"- {r['fecha']} {r['inicio']}"
+                    for r in nuevas[:10]
+                )
+                messagebox.showwarning(
+                    "Pago vencido",
+                    f"Pasaron {MINUTOS_PAGO} minutos y estas reservas siguen "
+                    f"pendientes de pago:\n\n{detalle}\n\n"
+                    "Modificá su estado a Confirmada (si se recibió el pago) "
+                    "o a Cancelada (si no se pagó).",
+                    parent=ventana,
+                )
         except Exception:
-            return
-
-        """La comparacion se hace en Python, con la misma hora con la que se calculo el vencimiento al guardar."""
-        ahora = datetime.now()
-        vencidas = [
-            r for r in pendientes
-            if r["vence_pago"] and r["vence_pago"] <= ahora
-        ]
-        ids_vencidas = {r["id"] for r in vencidas}
-
-        """Resaltar filas sin reconstruir la tabla"""
-        for fila in tabla.get_children():
-            id_fila = int(tabla.item(fila)["values"][0])
-            tabla.item(
-                fila, tags=("vencida",) if id_fila in ids_vencidas else ()
-            )
-
-        """Cartel permanente mientras haya reservas vencidas"""
-        if vencidas:
-            lbl_alerta.config(
-                text=f"⚠ {len(vencidas)} reserva(s) pendiente(s) con el plazo de pago vencido"
-            )
-        else:
-            lbl_alerta.config(text="")
-
-        """Aviso emergente: una sola vez por reserva"""
-        nuevas = [r for r in vencidas if r["id"] not in avisadas]
-        avisadas.intersection_update(ids_vencidas)  # olvida las ya resueltas
-        if nuevas:
-            avisadas.update(r["id"] for r in nuevas)
-            detalle = "\n".join(
-                f"• Reserva {r['id']} - {r['nombre']} - Cancha {r['cancha']} "
-                f"- {r['fecha']} {r['inicio']}"
-                for r in nuevas[:10]
-            )
-            messagebox.showwarning(
-                "Pago vencido",
-                f"Pasaron {MINUTOS_PAGO} minutos y estas reservas siguen "
-                f"pendientes de pago:\n\n{detalle}\n\n"
-                "Modificá su estado a Confirmada (si se recibió el pago) "
-                "o a Cancelada (si no se pagó).",
-                parent=ventana,
-            )
+            """Captura cualquier error de ciclo en segundo plano si la ventana se destruye"""
+            pass
 
     def ciclo_verificacion():
         """Revisa cada 30 segundos mientras esta pantalla este abierta."""
