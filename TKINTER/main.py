@@ -8,7 +8,8 @@ from tkinter import messagebox, ttk
 from BASE_DE_DATOS.database import obtener_conexion
 import sesion 
 from modelo_main import obtener_reservas_dia_db
-
+import threading 
+from BASE_DE_DATOS.backup_database import crear_respaldo
 """VENTANA PRINCIPAL"""
 ventana = tk.Tk()
 ventana.title("PadelBeche")
@@ -189,6 +190,63 @@ boton_salir = tk.Button(
     cursor="hand2"
 )
 boton_salir.pack(side="bottom", pady=25)
+
+def ejecutar_respaldo():
+    confirmar = messagebox.askyesno(
+        "Crear respaldo",
+          "¿Está seguro de que desea crear un respaldo de la base de datos?")
+    if not confirmar:
+        return
+    
+    boton_respaldo.config(
+        state="disabled",
+        text="Creando respaldo..."
+    )
+
+    def tarea():
+        try:
+            archivo = crear_respaldo()
+            ventana.after(
+                0,
+                lambda: finalizar_respaldo(str(archivo), None)
+            )
+        except Exception as error:
+            mensaje = str(error)
+            ventana.after(
+                0,
+                lambda: finalizar_respaldo(None, mensaje)
+            )   
+    threading.Thread(target=tarea, daemon=True).start()
+
+def finalizar_respaldo(archivo, error):
+    boton_respaldo.config(
+        state="normal",
+        text="Crear Respaldo"   
+    )
+    if error:
+        messagebox.showerror("Error al crear respaldo", f"Ocurrió un error al crear el respaldo:\n{error}") 
+    else:  
+        messagebox.showinfo(
+            "Respaldo exitoso",
+            f"El respaldo se creó exitosamente en:\n{archivo}"
+        )
+
+boton_respaldo = tk.Button(
+    barra_navegacion,
+    text="Crear Respaldo",
+    command=ejecutar_respaldo,
+    width=17,
+    height=2,
+    font=("Arial", 12, "bold"),
+    bg=BOTON,
+    fg=NEGRO,
+    activebackground=BOTON_HOVER,
+    activeforeground=BLANCO,
+    relief="flat",
+    bd=0,
+    cursor="hand2"
+)           
+boton_respaldo.pack(pady=6)
 
 """ Funcion ingresar"""
 def ingresar():
