@@ -262,9 +262,12 @@ def ventana_clientes(parent=None):
             )
             return
 
+        """Mensaje de advertencia indicando que también se eliminarán las reservas"""
         if not messagebox.askyesno(
             "Confirmar eliminación",
-            f"¿Desea eliminar al cliente con DNI {dni}?"
+            f"¿Desea eliminar al cliente con DNI {dni}?\n\n"
+            "⚠️ Atención: Se eliminarán también todas las reservas asociadas a este cliente.",
+            icon="warning"
         ):
             return
 
@@ -279,7 +282,7 @@ def ventana_clientes(parent=None):
 
             actualizar_tabla()
             limpiar()
-            messagebox.showinfo("Cliente", "Cliente eliminado.")
+            messagebox.showinfo("Cliente", "Cliente y sus reservas asociadas fueron eliminados correctamente.")
         except mysql.connector.Error as err:
             messagebox.showerror(
                 "No se pudo eliminar",

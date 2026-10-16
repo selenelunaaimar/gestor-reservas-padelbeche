@@ -50,7 +50,7 @@ def actualizar_cliente_db(nombre_apellido, telefono, email, dni):
     return 0
 
 def eliminar_cliente_db(dni):
-    """Elimina un cliente de la base de datos por su DNI."""
+    """Elimina un cliente y sus reservas asociadas de la base de datos por su DNI."""
     conexion = obtener_conexion()
     if not conexion:
         raise Exception("No se pudo conectar a la base de datos.")
@@ -58,8 +58,14 @@ def eliminar_cliente_db(dni):
     cursor = None
     try:
         cursor = conexion.cursor()
+        
+        """1. Primero borramos las reservas asociadas a este cliente para evitar error de clave foránea"""
+        cursor.execute("DELETE FROM reservas WHERE dni_cliente = %s", (dni,))
+        
+        """2. Luego borramos al cliente"""
         cursor.execute("DELETE FROM clientes WHERE dni = %s", (dni,))
         filas = cursor.rowcount
+        
         conexion.commit()
         return filas
     except mysql.connector.Error as err:
