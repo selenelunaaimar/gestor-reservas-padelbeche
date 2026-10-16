@@ -130,22 +130,22 @@ DELIMITER ;
 
 DELIMITER //
 
-CREATE TRIGGER validar_eliminacion_cliente
-BEFORE DELETE ON clientes
-FOR EACH ROW
-BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM reservas
-        WHERE dni_cliente = OLD.dni
-    ) THEN
-        SIGNAL SQLSTATE '45000'
-        SET MESSAGE_TEXT =
-            'No se puede eliminar un cliente que tiene reservas asociadas.';
-    END IF;
-END//
+-- CREATE TRIGGER validar_eliminacion_cliente
+-- BEFORE DELETE ON clientes
+-- FOR EACH ROW
+-- BEGIN
+--     IF EXISTS (
+--         SELECT 1
+--         FROM reservas
+--         WHERE dni_cliente = OLD.dni
+--     ) THEN
+--         SIGNAL SQLSTATE '45000'
+--         SET MESSAGE_TEXT =
+--             'No se puede eliminar un cliente que tiene reservas asociadas.';
+--     END IF;
+-- END//
 
-DELIMITER ;
+-- DELIMITER ;
 
 -- Carga inicial de datos de prueba: Clientes
 INSERT INTO clientes (dni, nombre_apellido, telefono, email) VALUES
@@ -158,7 +158,8 @@ INSERT INTO clientes (dni, nombre_apellido, telefono, email) VALUES
 ('43456789', 'Martín Gómez', '3515557777', 'martin@gmail.com'),
 ('44567890', 'Carmen Ríos', '3515558888', 'carmen@gmail.com'),
 ('45678901', 'Federico Díaz', '3515559999', 'federico@gmail.com'),
-('46789012', 'Valentina Sosa', '3515550000', 'valentina@gmail.com');
+('46789012', 'Valentina Sosa', '3515550000', 'valentina@gmail.com'),
+('42440440', 'Cecilia Alfonso', '3510009990', 'cecilia@gmail.com');
 
 -- Carga inicial de datos de prueba: Canchas
 INSERT INTO canchas (tipo_deporte, capacidad, precio_hora, estado) VALUES

@@ -1,8 +1,13 @@
 import mysql.connector
 import tkinter as tk
 from tkinter import messagebox, ttk
-from BASE_DE_DATOS.database import obtener_conexion
 import sesion
+from modelo_canchas import (
+    obtener_canchas_db,
+    insertar_cancha_db,
+    actualizar_cancha_db,
+    buscar_cancha_db
+)
 
 
 def ventana_canchas(parent=None):
@@ -142,26 +147,8 @@ def ventana_canchas(parent=None):
         for item in tabla.get_children():
             tabla.delete(item)
 
-        conexion = None
-        cursor = None
-
         try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor(dictionary=True)
-
-            query = """
-                SELECT
-                    id_cancha AS id,
-                    tipo_deporte AS tipo,
-                    capacidad,
-                    precio_hora AS precio,
-                    estado
-                FROM canchas
-                ORDER BY id_cancha
-            """
-
-            cursor.execute(query)
-            lista_canchas = cursor.fetchall()
+            lista_canchas = obtener_canchas_db()
 
             for cancha in lista_canchas:
                 tabla.insert(
@@ -181,13 +168,6 @@ def ventana_canchas(parent=None):
                 "Error",
                 f"No se pudo cargar la tabla de canchas: {err}"
             )
-
-        finally:
-            if cursor is not None:
-                cursor.close()
-
-            if conexion is not None:
-                conexion.close()
 
     def guardar():
         """Registra una nueva cancha. Solo puede hacerlo el supervisor."""
@@ -255,31 +235,14 @@ def ventana_canchas(parent=None):
             )
             return
 
-        conexion = None
-        cursor = None
-
         try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor()
-
-            query = """
-                INSERT INTO canchas
-                    (id_cancha, tipo_deporte, capacidad, precio_hora, estado)
-                VALUES (%s, %s, %s, %s, %s)
-            """
-
-            cursor.execute(
-                query,
-                (
-                    int(id_cancha),
-                    tipo,
-                    capacidad_num,
-                    precio_num,
-                    estado
-                )
+            insertar_cancha_db(
+                int(id_cancha),
+                tipo,
+                capacidad_num,
+                precio_num,
+                estado
             )
-
-            conexion.commit()
 
             actualizar_tabla()
             limpiar()
@@ -290,20 +253,10 @@ def ventana_canchas(parent=None):
             )
 
         except mysql.connector.Error as err:
-            if conexion is not None:
-                conexion.rollback()
-
             messagebox.showerror(
                 "Error en Base de Datos",
                 f"No se pudo guardar la cancha: {err}"
             )
-
-        finally:
-            if cursor is not None:
-                cursor.close()
-
-            if conexion is not None:
-                conexion.close()
 
     def buscar():
         """Busca una cancha por su identificador."""
@@ -324,26 +277,8 @@ def ventana_canchas(parent=None):
             )
             return
 
-        conexion = None
-        cursor = None
-
         try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor(dictionary=True)
-
-            query = """
-                SELECT
-                    id_cancha AS id,
-                    tipo_deporte AS tipo,
-                    capacidad,
-                    precio_hora AS precio,
-                    estado
-                FROM canchas
-                WHERE id_cancha = %s
-            """
-
-            cursor.execute(query, (int(id_cancha),))
-            cancha = cursor.fetchone()
+            cancha = buscar_cancha_db(int(id_cancha))
 
             if cancha:
                 limpiar()
@@ -387,13 +322,6 @@ def ventana_canchas(parent=None):
                 "Error en Base de Datos",
                 f"No se pudo realizar la búsqueda: {err}"
             )
-
-        finally:
-            if cursor is not None:
-                cursor.close()
-
-            if conexion is not None:
-                conexion.close()
 
     def modificar():
         """Modifica los datos de una cancha. Solo puede hacerlo el supervisor."""
@@ -459,44 +387,21 @@ def ventana_canchas(parent=None):
             )
             return
 
-        conexion = None
-        cursor = None
-
         try:
-            conexion = obtener_conexion()
-            cursor = conexion.cursor()
-
-            query = """
-                UPDATE canchas
-                SET
-                    tipo_deporte = %s,
-                    capacidad = %s,
-                    precio_hora = %s,
-                    estado = %s
-                WHERE id_cancha = %s
-            """
-
-            cursor.execute(
-                query,
-                (
-                    tipo,
-                    capacidad_num,
-                    precio_num,
-                    estado,
-                    int(id_cancha)
-                )
+            filas = actualizar_cancha_db(
+                tipo,
+                capacidad_num,
+                precio_num,
+                estado,
+                int(id_cancha)
             )
 
-            if cursor.rowcount == 0:
-                conexion.rollback()
-
+            if filas == 0:
                 messagebox.showwarning(
                     "Sin cambios",
                     "No se encontró la cancha o los datos no cambiaron."
                 )
                 return
-
-            conexion.commit()
 
             actualizar_tabla()
             limpiar()
@@ -507,20 +412,10 @@ def ventana_canchas(parent=None):
             )
 
         except mysql.connector.Error as err:
-            if conexion is not None:
-                conexion.rollback()
-
             messagebox.showerror(
                 "Error en Base de Datos",
                 f"No se pudo modificar la cancha: {err}"
             )
-
-        finally:
-            if cursor is not None:
-                cursor.close()
-
-            if conexion is not None:
-                conexion.close()
 
     def seleccionar_fila(event):
         """Carga los datos de la cancha seleccionada."""

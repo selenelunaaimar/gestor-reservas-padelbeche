@@ -6,8 +6,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import tkinter as tk
 from tkinter import ttk, messagebox
-from BASE_DE_DATOS.database import obtener_conexion
 import mysql.connector
+from modelo_consultas import (
+    obtener_nombres_clientes_db,
+    obtener_ids_canchas_db,
+    buscar_reservas_db
+)
 
 
 def ventana_consultas(parent=None):
@@ -132,29 +136,18 @@ def ventana_consultas(parent=None):
     """------------------------------------------------ FUNCIONES INTERNAS ------------------------------------------------"""
 
     def cargar_filtros():
-        """Carga los nombres de clientes y los IDs de canchas desde la base de datos MySQL para los combobox."""
-        conexion = obtener_conexion()
-        if conexion:
-            try:
-                cursor = conexion.cursor()
-                
-                """Cargar clientes"""
-                cursor.execute("SELECT nombre_apellido FROM clientes")
-                nombres_clientes = ["Todos"] + [row[0] for row in cursor.fetchall()]
-                entrada_cliente["values"] = nombres_clientes
-                entrada_cliente.set("Todos")
+        """Carga los nombres de clientes y los IDs de canchas desde la base de datos MySQL para los combobox a través del modelo."""
+        try:
+            nombres_clientes = ["Todos"] + obtener_nombres_clientes_db()
+            entrada_cliente["values"] = nombres_clientes
+            entrada_cliente.set("Todos")
 
-                """Cargar canchas"""
-                cursor.execute("SELECT id_cancha FROM canchas")
-                ids_canchas = ["Todas"] + [str(row[0]) for row in cursor.fetchall()]
-                entrada_cancha["values"] = ids_canchas
-                entrada_cancha.set("Todas")
+            ids_canchas = ["Todas"] + obtener_ids_canchas_db()
+            entrada_cancha["values"] = ids_canchas
+            entrada_cancha.set("Todas")
 
-            except mysql.connector.Error as err:
-                messagebox.showerror("Error", f"No se pudieron cargar los filtros: {err}")
-            finally:
-                cursor.close()
-                conexion.close()
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error", f"No se pudieron cargar los filtros: {err}")
 
     def limpiar_resultados():
         for item in tabla.get_children():
@@ -168,58 +161,40 @@ def ventana_consultas(parent=None):
 
         limpiar_resultados()
 
-        """Consulta robusta uniendo reservas, clientes y canchas en MySQL"""
-        conexion = obtener_conexion()
-        if conexion:
-            try:
-                cursor = conexion.cursor()
-                
-                query = """
-                    SELECT r.fecha, c.nombre_apellido, c.dni, r.id_cancha, can.tipo_deporte, r.hora_inicio, r.hora_fin, r.estado_reserva
-                    FROM reservas r
-                    JOIN clientes c ON r.dni_cliente = c.dni
-                    JOIN canchas can ON r.id_cancha = can.id_cancha
-                    WHERE 1=1
-                """
-                params = []
+        """Consulta robusta uniendo reservas, clientes y canchas en MySQL a través del modelo"""
+        try:
+            registros = buscar_reservas_db(desde, hasta, cliente_filtro, cancha_filtro)
 
-                if desde != "":
-                    query += " AND r.fecha >= %s"
-                    params.append(desde)
+            for reserva in registros:
+                """Convertir la fecha de la base de datos (AAAA-MM-DD) a formato DD/MM/AAAA para mostrar en la interfaz"""
+                fecha_db = reserva[0]
+                if hasattr(fecha_db, "strftime"):
+                    fecha_formateada = fecha_db.strftime("%d/%m/%Y")
+                else:
+                    """Por si viene como string en formato AAAA-MM-DD"""
+                    partes = str(fecha_db).split("-")
+                    if len(partes) == 3:
+                        fecha_formateada = f"{partes[2]}/{partes[1]}/{partes[0]}"
+                    else:
+                        fecha_formateada = fecha_db
 
-                if hasta != "":
-                    query += " AND r.fecha <= %s"
-                    params.append(hasta)
+                """Reconstruir la tupla/fila con la fecha formateada en la primera posición"""
+                fila_modificada = (fecha_formateada,) + reserva[1:]
 
-                if cliente_filtro != "Todos" and cliente_filtro != "":
-                    query += " AND c.nombre_apellido = %s"
-                    params.append(cliente_filtro)
+                tabla.insert(
+                    "",
+                    tk.END,
+                    values=fila_modificada
+                )
 
-                if cancha_filtro != "Todas" and cancha_filtro != "":
-                    query += " AND r.id_cancha = %s"
-                    params.append(cancha_filtro)
+            if len(registros) == 0:
+                messagebox.showinfo(
+                    "Consulta",
+                    "No se encontraron reservas."
+                )
 
-                cursor.execute(query, tuple(params))
-                registros = cursor.fetchall()
-
-                for reserva in registros:
-                    tabla.insert(
-                        "",
-                        tk.END,
-                        values=reserva
-                    )
-
-                if len(registros) == 0:
-                    messagebox.showinfo(
-                        "Consulta",
-                        "No se encontraron reservas."
-                    )
-
-            except mysql.connector.Error as err:
-                messagebox.showerror("Error", f"Error al realizar la consulta: {err}")
-            finally:
-                cursor.close()
-                conexion.close()
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error", f"Error al realizar la consulta: {err}")
 
     """------------------------------------------------BOTONES------------------------------------------------"""
 

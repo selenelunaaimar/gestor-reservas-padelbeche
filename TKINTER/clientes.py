@@ -7,9 +7,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import tkinter as tk
 from tkinter import ttk, messagebox
 import re
-from BASE_DE_DATOS.database import obtener_conexion
 import mysql.connector # Importamos por si usamos excepciones para los errores
 import sesion
+from modelo_clientes import (
+    obtener_clientes_db,
+    insertar_cliente_db,
+    actualizar_cliente_db,
+    eliminar_cliente_db,
+    buscar_cliente_db
+)
 
 def ventana_clientes(parent=None):
     """Se unificó el manejo de la ventana principal, manteniendo la compatibilidad tanto si se abre independiente como en solapas"""
@@ -76,21 +82,12 @@ def ventana_clientes(parent=None):
         for item in tabla.get_children():
             tabla.delete(item)
 
-        conexion = obtener_conexion()
-        if conexion:
-            try:
-                cursor = conexion.cursor()
-                cursor.execute(
-                     "SELECT dni, nombre_apellido, telefono, email FROM clientes"
-                    )
-                registros = cursor.fetchall()
-                for cliente in registros:
-                    tabla.insert("", tk.END, values=cliente)
-            except mysql.connector.Error as err:
-                messagebox.showerror("Error de Base de Datos", f"No se pudieron cargar los clientes: {err}")
-            finally:
-                cursor.close()
-                conexion.close()
+        try:
+            registros = obtener_clientes_db()
+            for cliente in registros:
+                tabla.insert("", tk.END, values=cliente)
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error de Base de Datos", f"No se pudieron cargar los clientes: {err}")
 
     def guardar():
         dni = entrada_dni.get().strip() # .strip elimina espacios
@@ -106,7 +103,7 @@ def ventana_clientes(parent=None):
                 "Debe completar los datos del cliente."
             )
             return 
-
+        
         """Valida DNI obligatorio"""
         if not dni: 
             messagebox.showwarning(
@@ -194,23 +191,14 @@ def ventana_clientes(parent=None):
             )
             return
         
-        """Inserta el cliente directamente en la Base de Datos MySQL"""
-        conexion = obtener_conexion()
-        if conexion:
-            try:
-                cursor = conexion.cursor()
-                query = "INSERT INTO clientes (dni, nombre_apellido, telefono, email) VALUES (%s, %s, %s, %s)"
-                cursor.execute(query, (dni, nombre_apellido, telefono, email))
-                conexion.commit()
-                
-                actualizar_tabla()
-                limpiar()
-                messagebox.showinfo("Cliente", "Cliente guardado correctamente en la base de datos.")
-            except mysql.connector.Error as err:
-                messagebox.showerror("Error", f"No se pudo guardar (verificá que el DNI no esté repetido):\n{err}")
-            finally:
-                cursor.close()
-                conexion.close()
+        """Inserta el cliente a través del modelo de datos"""
+        try:
+            insertar_cliente_db(dni, nombre_apellido, telefono, email)
+            actualizar_tabla()
+            limpiar()
+            messagebox.showinfo("Cliente", "Cliente guardado correctamente en la base de datos.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error", f"No se pudo guardar (verificá que el DNI no esté repetido):\n{err}")
 
     def modificar():
         if not es_supervisor:
@@ -246,26 +234,18 @@ def ventana_clientes(parent=None):
             messagebox.showerror("Error", "Debe ingresar un mail válido.")
             return
 
-        """Actualiza el registro en la Base de Datos MySQL"""
-        conexion = obtener_conexion()
-        if conexion:
-            try:
-                cursor = conexion.cursor()
-                query = "UPDATE clientes SET nombre_apellido = %s, telefono = %s, email = %s WHERE dni = %s"
-                cursor.execute(query, (nombre_apellido, telefono, email, dni))
-                conexion.commit()
+        """Actualiza el registro a través del modelo de datos"""
+        try:
+            filas_afectadas = actualizar_cliente_db(nombre_apellido, telefono, email, dni)
+            if filas_afectadas > 0:
+                actualizar_tabla()
+                limpiar()
+                messagebox.showinfo("Éxito", "Cliente modificado correctamente.")
+            else:
+                messagebox.showwarning("Modificar", "No se encontró un cliente registrado con ese DNI.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error", f"No se pudo modificar: {err}")
 
-                if cursor.rowcount > 0:
-                    actualizar_tabla()
-                    limpiar()
-                    messagebox.showinfo("Éxito", "Cliente modificado correctamente.")
-                else:
-                    messagebox.showwarning("Modificar", "No se encontró un cliente registrado con ese DNI.")
-            except mysql.connector.Error as err:
-                messagebox.showerror("Error", f"No se pudo modificar: {err}")
-            finally:
-                cursor.close()
-                conexion.close()
     def eliminar():
         if not es_supervisor:
             messagebox.showerror(
@@ -288,76 +268,46 @@ def ventana_clientes(parent=None):
         ):
             return
 
-        conexion = None
-        cursor = None
         try:
-            conexion = obtener_conexion()
-            if not conexion:
-                messagebox.showerror("Error", "No se pudo conectar a la base de datos.")
-                return
-
-            cursor = conexion.cursor()
-            cursor.execute(
-                "DELETE FROM clientes WHERE dni = %s",
-                (dni,)
-            )
-
-            if cursor.rowcount == 0:
+            filas = eliminar_cliente_db(dni)
+            if filas == 0:
                 messagebox.showwarning(
                     "Cliente",
                     "No se encontró un cliente con ese DNI."
                 )
                 return
 
-            conexion.commit()
             actualizar_tabla()
             limpiar()
             messagebox.showinfo("Cliente", "Cliente eliminado.")
-
         except mysql.connector.Error as err:
-            if conexion is not None:
-                conexion.rollback()
             messagebox.showerror(
                 "No se pudo eliminar",
                 f"{err}"
             )
 
-        finally:
-            if cursor is not None:
-                cursor.close()
-            if conexion is not None:
-                conexion.close()
-    """Busca registro por DNI en la base de datos y lo muestra en el formulario"""
+    """Busca registro por DNI llamando al modelo y lo muestra en el formulario"""
     def buscar(): 
         dni = entrada_dni.get().strip()
         if not dni:
             messagebox.showwarning("Buscar", "Ingrese un DNI para buscar.")
             return
 
-        conexion = obtener_conexion()
-        if conexion:
-            try:
-                cursor = conexion.cursor()
-                cursor.execute("SELECT nombre_apellido, telefono, email FROM clientes WHERE dni = %s", (dni,))
-                resultado = cursor.fetchone()
+        try:
+            resultado = buscar_cliente_db(dni)
+            if resultado:
+                entrada_nombre_apellido.delete(0, tk.END)
+                entrada_nombre_apellido.insert(0, resultado[0])
 
-                if resultado:
-                    entrada_nombre_apellido.delete(0, tk.END)
-                    entrada_nombre_apellido.insert(0, resultado[0])
+                entrada_telefono.delete(0, tk.END)
+                entrada_telefono.insert(0, resultado[1])
 
-                    entrada_telefono.delete(0, tk.END)
-                    entrada_telefono.insert(0, resultado[1])
-
-                    entrada_email.delete(0, tk.END)
-                    entrada_email.insert(0, resultado[2])
-                else:
-                    messagebox.showinfo("Buscar", "No se encontró un cliente con ese DNI.")
-            except mysql.connector.Error as err:
-                messagebox.showerror("Error", f"Error al buscar: {err}")
-            finally:
-                cursor.close()
-                conexion.close()
-
+                entrada_email.delete(0, tk.END)
+                entrada_email.insert(0, resultado[2])
+            else:
+                messagebox.showinfo("Buscar", "No se encontró un cliente con ese DNI.")
+        except mysql.connector.Error as err:
+            messagebox.showerror("Error", f"Error al buscar: {err}")
 
     def seleccionar_tabla(event):
         seleccion = tabla.selection()

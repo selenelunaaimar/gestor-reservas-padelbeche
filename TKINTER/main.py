@@ -7,6 +7,7 @@ from datetime import datetime #obtiene la fecha y hora actuales
 from tkinter import messagebox, ttk
 from BASE_DE_DATOS.database import obtener_conexion
 import sesion 
+from modelo_main import obtener_reservas_dia_db
 
 """VENTANA PRINCIPAL"""
 ventana = tk.Tk()
@@ -25,6 +26,7 @@ CREDENCIALES = {
     "Supervisor": "Admin2026",
     "Empleado": "1234Hola",
 }
+
 """ Agrego una variable de sesion para guardar el rol, y poder usarla en los demas modulos"""
 rol_actual = None
 
@@ -107,11 +109,11 @@ def pantalla_inicio(contenedor):
     )
 
     """el ancho de las columnas las definimos con width (920 pixeles), anchor es para colocar el contenido en el un espacio determinado.
-       anchor="w"  # izquierda
-       anchor="e"  # derecha
-       anchor="center"  # centro
-       anchor="n"  # arriba
-       anchor="s"  # abajo
+        anchor="w"  # izquierda
+        anchor="e"  # derecha
+        anchor="center"  # centro
+        anchor="n"  # arriba
+        anchor="s"  # abajo
     stretch es para evitar que Tkinter agrande las columnas automaticamente"""
 
     tabla.heading("id Reserva", text="ID Reserva")
@@ -133,21 +135,9 @@ def pantalla_inicio(contenedor):
     tabla.column("Estado", width=80, anchor="center", stretch=True)
     tabla.pack(fill="both", expand=True)
 
-    """ Obtenemos las reservas y clientes directamente desde MySQL para la pantalla principal """
+    """ Obtenemos las reservas y clientes a través del modelo para la pantalla principal """
     try:
-        conexion = obtener_conexion()
-        cursor = conexion.cursor(dictionary=True)
-        cursor.execute("""
-            SELECT r.id_reserva AS id, r.dni_cliente AS cliente, c.nombre_apellido AS nombre, 
-                   r.id_cancha AS cancha, r.fecha, TIME_FORMAT(r.hora_inicio, '%H:%i') AS inicio, 
-                   TIME_FORMAT(r.hora_fin, '%H:%i') AS fin, r.estado_reserva AS estado 
-            FROM reservas r
-            JOIN clientes c ON r.dni_cliente = c.dni
-            ORDER BY r.hora_inicio ASC
-        """)
-        lista_reservas = cursor.fetchall()
-        cursor.close()
-        conexion.close()
+        lista_reservas = obtener_reservas_dia_db()
     except Exception:
         lista_reservas = []
 
