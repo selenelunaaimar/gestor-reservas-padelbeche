@@ -7,8 +7,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import tkinter as tk
 from tkinter import ttk, messagebox
 import re
-import mysql.connector # Importamos por si usamos excepciones para los errores
+import mysql.connector
 import sesion
+
 from modelo_clientes import (
     obtener_clientes_db,
     insertar_cliente_db,
@@ -17,15 +18,17 @@ from modelo_clientes import (
     buscar_cliente_db
 )
 
+
 def ventana_clientes(parent=None):
     """Se unificó el manejo de la ventana principal, manteniendo la compatibilidad tanto si se abre independiente como en solapas"""
     ventana = parent or tk.Toplevel()
     es_supervisor = sesion.rol_actual == "Supervisor"
+
     if parent is None:
         ventana.title("Gestión de Clientes")
         ventana.geometry("1280x720")
 
-    """Título principal"""
+    # Título principal
     titulo = tk.Label(
         ventana,
         text="Gestión de Clientes",
@@ -33,27 +36,29 @@ def ventana_clientes(parent=None):
     )
     titulo.pack(pady=(15, 10))
 
-    """Contenedor principal que divide en dos columnas"""
+    # Contenedor principal que divide en dos columnas
     contenedor = tk.Frame(ventana)
     contenedor.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
-    """------------------------------------------------ PANEL IZQUIERDO: TABLA ------------------------------------------------"""
+    # PANEL IZQUIERDO: TABLA
     panel_izq = tk.Frame(contenedor, padx=5, pady=5)
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-    """Tabla que muestra los Clientes"""
+    # Tabla que muestra los clientes
     columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email")
     tabla = ttk.Treeview(panel_izq, columns=columnas, show="headings")
+
     for col in columnas:
         tabla.heading(col, text=col)
         tabla.column(col, width=150)
+
     tabla.pack(fill=tk.BOTH, expand=True)
 
-    """------------------------------------------ PANEL DERECHO: FORMULARIO Y BOTONES ------------------------------------------"""
+    # PANEL DERECHO: FORMULARIO Y BOTONES
     panel_der = tk.Frame(contenedor, padx=10, pady=5)
     panel_der.pack(side=tk.RIGHT, fill=tk.Y)
 
-    """Campos del formulario con diseño vertical apilado"""
+    # Campos del formulario
     tk.Label(panel_der, text="DNI:").pack(anchor="w")
     entrada_dni = tk.Entry(panel_der, width=30)
     entrada_dni.pack(fill=tk.X, pady=2)
@@ -70,57 +75,61 @@ def ventana_clientes(parent=None):
     entrada_email = tk.Entry(panel_der, width=30)
     entrada_email.pack(fill=tk.X, pady=2)
 
-    """------------------------------------------------Funciones internas----------------------------------------------------"""
-    def limpiar(): # Limpia los campos del formulario
+    # FUNCIONES INTERNAS
+
+    def limpiar():
+        """Limpia los campos del formulario"""
         entrada_dni.delete(0, tk.END)
         entrada_nombre_apellido.delete(0, tk.END)
         entrada_telefono.delete(0, tk.END)
         entrada_email.delete(0, tk.END)
 
     def actualizar_tabla():
-        """Consulta la base de datos MySQL y llena la tabla del Treeview."""
+        """Consulta la base de datos MySQL y llena la tabla"""
         for item in tabla.get_children():
             tabla.delete(item)
 
         try:
             registros = obtener_clientes_db()
+
             for cliente in registros:
                 tabla.insert("", tk.END, values=cliente)
+
         except mysql.connector.Error as err:
-            messagebox.showerror("Error de Base de Datos", f"No se pudieron cargar los clientes: {err}")
+            messagebox.showerror(
+                "Error de Base de Datos",
+                f"No se pudieron cargar los clientes: {err}"
+            )
 
     def guardar():
-        dni = entrada_dni.get().strip() # .strip elimina espacios
+        dni = entrada_dni.get().strip()
         nombre_apellido = entrada_nombre_apellido.get().strip()
         telefono = entrada_telefono.get().strip()
         email = entrada_email.get().strip()
         patron_email = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
-        """Valida que no haya ningún campo sin dato"""
-        if not dni and not nombre_apellido and not telefono and not email: 
+        # Valida que haya datos
+        if not dni and not nombre_apellido and not telefono and not email:
             messagebox.showerror(
                 "Datos incompletos",
                 "Debe completar los datos del cliente."
             )
-            return 
-        
-        """Valida DNI obligatorio"""
-        if not dni: 
+            return
+
+        if not dni:
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar DNI"
             )
             return
 
-        """Valida nombre obligatorio"""
-        if not nombre_apellido: 
+        if not nombre_apellido:
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar nombre y apellido."
             )
             return
 
-        """Valida teléfono obligatorio"""
         if not telefono:
             messagebox.showwarning(
                 "Datos incompletos",
@@ -128,47 +137,47 @@ def ventana_clientes(parent=None):
             )
             return
 
-        """Valida email obligatorio"""
-        if not email: 
+        if not email:
             messagebox.showwarning(
                 "Datos incompletos",
                 "Debe ingresar email."
             )
             return
 
-        """Valida que DNI sean números"""
-        if not dni.isdigit(): 
+        # Valida DNI
+        if not dni.isdigit():
             messagebox.showerror(
                 "Error",
                 "El DNI debe contener sólo números."
             )
             return
 
-        """Valida la longitud del DNI"""
-        if len(dni) < 7 or len(dni) > 8: 
+        if len(dni) < 7 or len(dni) > 8:
             messagebox.showerror(
                 "Error",
                 "El DNI debe tener entre 7 y 8 dígitos."
             )
             return
 
-        """Valida nombre sólo letras"""
-        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+", nombre_apellido): 
+        # Valida nombre
+        if not re.fullmatch(
+            r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+",
+            nombre_apellido
+        ):
             messagebox.showerror(
                 "Error",
                 "Ingrese un nombre válido."
             )
             return
 
-        """Valida longitud de nombre y apellido"""
-        if len(nombre_apellido) < 3: 
+        if len(nombre_apellido) < 3:
             messagebox.showerror(
                 "Error",
                 "El nombre debe tener al menos 3 caracteres."
             )
             return
 
-        """Valida teléfono sean números"""
+        # Valida teléfono
         if not telefono.isdigit():
             messagebox.showerror(
                 "Error",
@@ -183,31 +192,46 @@ def ventana_clientes(parent=None):
             )
             return
 
-        """Valida email"""
-        if not re.match(patron_email, email): 
+        # Valida email
+        if not re.match(patron_email, email):
             messagebox.showerror(
                 "Error",
                 "Debe ingresar un mail válido."
             )
             return
-        
-        """Inserta el cliente a través del modelo de datos"""
+
+        # Inserta el cliente en la base de datos
         try:
-            insertar_cliente_db(dni, nombre_apellido, telefono, email)
+            insertar_cliente_db(
+                dni,
+                nombre_apellido,
+                telefono,
+                email
+            )
+
             actualizar_tabla()
             limpiar()
-            messagebox.showinfo("Cliente", "Cliente guardado correctamente en la base de datos.")
+
+            messagebox.showinfo(
+                "Cliente",
+                "Cliente guardado correctamente en la base de datos."
+            )
+
         except mysql.connector.Error as err:
-            messagebox.showerror("Error", f"No se pudo guardar (verificá que el DNI no esté repetido):\n{err}")
+            messagebox.showerror(
+                "Error",
+                f"No se pudo guardar (verificá que el DNI no esté repetido):\n{err}"
+            )
 
     def modificar():
-        if not es_supervisor:
+        """Modifica un cliente. Solo el Supervisor puede hacerlo."""
+        if sesion.rol_actual != "Supervisor":
             messagebox.showerror(
-              "Permiso denegado",
-              "Solo Supervisor puede modificar clientes."
+                "Permiso denegado",
+                "Solo Supervisor puede modificar clientes."
             )
             return
-        
+
         dni = entrada_dni.get().strip()
         nombre_apellido = entrada_nombre_apellido.get().strip()
         telefono = entrada_telefono.get().strip()
@@ -215,39 +239,78 @@ def ventana_clientes(parent=None):
         patron_email = r'^[\w\.-]+@[\w\.-]+\.\w+$'
 
         if not dni:
-            messagebox.showwarning("Atención", "Ingrese o seleccione el DNI del cliente a modificar.")
+            messagebox.showwarning(
+                "Atención",
+                "Ingrese o seleccione el DNI del cliente a modificar."
+            )
             return
 
         if not nombre_apellido or not telefono or not email:
-            messagebox.showwarning("Datos incompletos", "Todos los campos deben estar completos para modificar.")
+            messagebox.showwarning(
+                "Datos incompletos",
+                "Todos los campos deben estar completos para modificar."
+            )
             return
 
-        if not re.fullmatch(r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+", nombre_apellido) or len(nombre_apellido) < 3:
-            messagebox.showerror("Error", "Ingrese un nombre y apellido válido (mínimo 3 letras).")
+        if (
+            not re.fullmatch(
+                r"[A-Za-zÁÉÍÓÚáéíóúÑñ ]+",
+                nombre_apellido
+            )
+            or len(nombre_apellido) < 3
+        ):
+            messagebox.showerror(
+                "Error",
+                "Ingrese un nombre y apellido válido (mínimo 3 letras)."
+            )
             return
 
         if not telefono.isdigit() or len(telefono) < 8 or len(telefono) > 15:
-            messagebox.showerror("Error", "El teléfono debe contener sólo números (entre 8 y 15 dígitos).")
+            messagebox.showerror(
+                "Error",
+                "El teléfono debe contener sólo números (entre 8 y 15 dígitos)."
+            )
             return
 
         if not re.match(patron_email, email):
-            messagebox.showerror("Error", "Debe ingresar un mail válido.")
+            messagebox.showerror(
+                "Error",
+                "Debe ingresar un mail válido."
+            )
             return
 
-        """Actualiza el registro a través del modelo de datos"""
+        # Actualiza el cliente en la base de datos
         try:
-            filas_afectadas = actualizar_cliente_db(nombre_apellido, telefono, email, dni)
+            filas_afectadas = actualizar_cliente_db(
+                nombre_apellido,
+                telefono,
+                email,
+                dni
+            )
+
             if filas_afectadas > 0:
                 actualizar_tabla()
                 limpiar()
-                messagebox.showinfo("Éxito", "Cliente modificado correctamente.")
+
+                messagebox.showinfo(
+                    "Éxito",
+                    "Cliente modificado correctamente."
+                )
             else:
-                messagebox.showwarning("Modificar", "No se encontró un cliente registrado con ese DNI.")
+                messagebox.showwarning(
+                    "Modificar",
+                    "No se encontró un cliente registrado con ese DNI."
+                )
+
         except mysql.connector.Error as err:
-            messagebox.showerror("Error", f"No se pudo modificar: {err}")
+            messagebox.showerror(
+                "Error",
+                f"No se pudo modificar: {err}"
+            )
 
     def eliminar():
-        if not es_supervisor:
+        """Elimina un cliente. Solo el Supervisor puede hacerlo."""
+        if sesion.rol_actual != "Supervisor":
             messagebox.showerror(
                 "Permiso denegado",
                 "Solo Supervisor puede eliminar clientes."
@@ -255,6 +318,7 @@ def ventana_clientes(parent=None):
             return
 
         dni = entrada_dni.get().strip()
+
         if not dni:
             messagebox.showwarning(
                 "Cliente",
@@ -262,7 +326,6 @@ def ventana_clientes(parent=None):
             )
             return
 
-        """Mensaje de advertencia indicando que también se eliminarán las reservas"""
         if not messagebox.askyesno(
             "Confirmar eliminación",
             f"¿Desea eliminar al cliente con DNI {dni}?\n\n"
@@ -273,6 +336,7 @@ def ventana_clientes(parent=None):
 
         try:
             filas = eliminar_cliente_db(dni)
+
             if filas == 0:
                 messagebox.showwarning(
                     "Cliente",
@@ -282,22 +346,32 @@ def ventana_clientes(parent=None):
 
             actualizar_tabla()
             limpiar()
-            messagebox.showinfo("Cliente", "Cliente y sus reservas asociadas fueron eliminados correctamente.")
+
+            messagebox.showinfo(
+                "Cliente",
+                "Cliente y sus reservas asociadas fueron eliminados correctamente."
+            )
+
         except mysql.connector.Error as err:
             messagebox.showerror(
                 "No se pudo eliminar",
                 f"{err}"
             )
 
-    """Busca registro por DNI llamando al modelo y lo muestra en el formulario"""
-    def buscar(): 
+    def buscar():
+        """Busca un registro por DNI y lo muestra en el formulario"""
         dni = entrada_dni.get().strip()
+
         if not dni:
-            messagebox.showwarning("Buscar", "Ingrese un DNI para buscar.")
+            messagebox.showwarning(
+                "Buscar",
+                "Ingrese un DNI para buscar."
+            )
             return
 
         try:
             resultado = buscar_cliente_db(dni)
+
             if resultado:
                 entrada_nombre_apellido.delete(0, tk.END)
                 entrada_nombre_apellido.insert(0, resultado[0])
@@ -307,26 +381,37 @@ def ventana_clientes(parent=None):
 
                 entrada_email.delete(0, tk.END)
                 entrada_email.insert(0, resultado[2])
+
             else:
-                messagebox.showinfo("Buscar", "No se encontró un cliente con ese DNI.")
+                messagebox.showinfo(
+                    "Buscar",
+                    "No se encontró un cliente con ese DNI."
+                )
+
         except mysql.connector.Error as err:
-            messagebox.showerror("Error", f"Error al buscar: {err}")
+            messagebox.showerror(
+                "Error",
+                f"Error al buscar: {err}"
+            )
 
     def seleccionar_tabla(event):
         seleccion = tabla.selection()
+
         if seleccion:
             item = tabla.item(seleccion[0])
             valores = item["values"]
+
             limpiar()
+
             entrada_dni.insert(0, valores[0])
             entrada_nombre_apellido.insert(0, valores[1])
             entrada_telefono.insert(0, valores[2])
             entrada_email.insert(0, valores[3])
 
-    """Vinculación del evento de selección en la tabla"""
+    # Vinculación de la selección de la tabla
     tabla.bind("<<TreeviewSelect>>", seleccionar_tabla)
 
-    # Bloque de botones
+    # BLOQUE DE BOTONES
     botones = tk.Frame(panel_der, pady=10)
     botones.pack(fill=tk.X)
 
@@ -337,7 +422,15 @@ def ventana_clientes(parent=None):
         width=15
     ).pack(pady=2)
 
+    # Estos botones solo aparecen para el Supervisor
     if es_supervisor:
+        tk.Button(
+            botones,
+            text="Modificar",
+            command=modificar,
+            width=15
+        ).pack(pady=2)
+
         tk.Button(
             botones,
             text="Dar de baja",
@@ -359,10 +452,11 @@ def ventana_clientes(parent=None):
         width=15
     ).pack(pady=2)
 
-    """Carga inicial de datos en la tabla desde la base de datos"""
+    # Carga inicial de datos
     actualizar_tabla()
 
-    """Si se pasa un contenedor padre, empaqueta y retorna la ventana principal"""
+    # Si se pasa un contenedor padre, empaqueta y retorna la ventana principal
     if parent is not None:
         ventana.pack(fill=tk.BOTH, expand=True)
+
     return ventana
