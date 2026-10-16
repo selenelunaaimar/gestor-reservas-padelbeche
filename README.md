@@ -1,63 +1,91 @@
 # Gestor de reservas PadelBeche
 
 Aplicación de escritorio para gestionar clientes, canchas y reservas de un
-complejo deportivo. El proyecto está desarrollado en Python utilizando la
-biblioteca gráfica Tkinter.
+complejo deportivo. Está desarrollada en Python con Tkinter y utiliza MySQL
+para guardar los datos.
 
-## Alcance de esta etapa
+## Alcance
 
-El objetivo de esta primera etapa es desarrollar y probar la interfaz gráfica
-del sistema. Actualmente se encuentran implementadas las pantallas, la
-navegación entre secciones, el funcionamiento de los botones y las principales
-validaciones de datos.
+La aplicación permite gestionar clientes, canchas y reservas desde una
+interfaz gráfica. Los cambios se guardan en MySQL y se mantienen al cerrar el
+programa.
 
-Se definió el esquema de la base de datos en MySQL. La base todavía no está
-conectada a la interfaz gráfica.
+La configuración de demostración utiliza una base local con datos ficticios.
+No se accede a datos reales de ningún tipo. No conectes esta versión a una base
+de datos de producción ni cargues información real.
 
-Por el momento, la aplicación utiliza listas temporales en memoria para
-mostrar y modificar los datos. Por ese motivo, los cambios realizados desde
-la interfaz se pierden al cerrar el programa.
+## Funcionalidades
 
-## Funcionalidades implementadas
+- Inicio de sesión con los roles `Supervisor` y `Empleado`.
+- Pantalla de inicio con las reservas del día actual.
+- Gestión de clientes: el Empleado puede registrarlos y consultarlos; el
+  Supervisor también puede modificarlos y eliminarlos. Al eliminar un cliente,
+  también se eliminan sus reservas asociadas.
+- Gestión de canchas: el Supervisor puede registrarlas y modificarlas; el
+  Empleado puede consultarlas.
+- Gestión de reservas: el Empleado puede registrarlas, consultarlas y
+  modificarlas; el Supervisor también puede eliminarlas.
+- Reservas vinculadas a un cliente registrado y a una cancha existente.
+- Selección de canchas activas al registrar reservas.
+- Estados de reserva: `Pendiente`, `Confirmada` y `Cancelada`.
+- Plazo de pago de 15 minutos para reservas pendientes y aviso de vencimiento
+  mientras la pantalla de reservas está abierta. El estado no cambia
+  automáticamente; el usuario debe actualizarlo.
+- Consultas con filtros por rango de fechas, cliente y cancha.
+- Creación de respaldos de la base de datos.
+- Validaciones de campos, formatos, datos de clientes, capacidad, precio,
+  fechas y horarios.
 
-- Pantalla de inicio con las reservas correspondientes al día actual.
-- Alta, modificación, búsqueda y eliminación de clientes.
-- Alta, modificación y búsqueda de canchas.
-- Alta, modificación y búsqueda de reservas.
-- Validación de campos obligatorios y formatos.
-- Validación de DNI, teléfono, email, capacidad y precio.
-- Validación de fechas y horarios de las reservas.
-- Control de superposición de reservas para una misma cancha.
-- Estados para reservas: `Confirmada`, `Pendiente` y `Cancelada`.
-- Filtros de consultas por fecha, cliente y cancha.
-- Navegación mediante botones entre las distintas pantallas.
+Al registrar una reserva, se impide superponer horarios de reservas pendientes
+o confirmadas para la misma cancha y fecha. Las reservas canceladas no ocupan
+el horario. El control de superposición al modificar una reserva es una
+limitación conocida.
+
+## Credenciales de demostración
+
+Estas credenciales permiten probar los roles de la aplicación. Se utilizan
+únicamente con datos ficticios; no se accede a datos reales de ningún tipo.
+
+| Rol | Contraseña |
+|---|---|
+| Supervisor | `Admin2026` |
+| Empleado | `1234Hola` |
+
+No reutilices estas contraseñas en otros sistemas.
 
 ## Tecnologías
 
 - Python 3
 - Tkinter y ttk
-- MySQL 8 para la base de datos
-- MySQL Connector/Python para la conexión desde Python
-- Git para el control de versiones
+- MySQL 8
+- MySQL Connector/Python
+- Git
 
-La interfaz gráfica todavía trabaja con datos temporales en memoria. El
-conector MySQL se instala desde `requirements.txt`.
+El conector MySQL se instala desde `requirements.txt`. La aplicación obtiene
+la configuración de conexión de las variables de entorno; el archivo `.env`
+no se carga automáticamente.
 
 ## Estructura del proyecto
 
 ```text
 .
 |-- BASE_DE_DATOS/
-|   |-- database.py       # Conexión a MySQL
-|   `-- schema_mysql.sql  # Tablas y datos iniciales
+|   |-- backup_database.py # Creación de respaldos
+|   |-- database.py        # Conexión a MySQL
+|   `-- schema_mysql.sql   # Tablas y datos de ejemplo
 |-- TKINTER/
-|   |-- main.py           # Ventana principal y navegación
-|   |-- clientes.py       # Pantalla y operaciones de clientes
-|   |-- canchas.py        # Pantalla y operaciones de canchas
-|   |-- reservas.py       # Pantalla y operaciones de reservas
-|   `-- consultas.py      # Pantalla de consultas y filtros
+|   |-- main.py            # Ventana principal y navegación
+|   |-- clientes.py        # Interfaz de clientes
+|   |-- modelo_clientes.py # Acceso a datos de clientes
+|   |-- canchas.py         # Interfaz de canchas
+|   |-- modelo_canchas.py  # Acceso a datos de canchas
+|   |-- reservas.py        # Interfaz de reservas
+|   |-- modelo_reservas.py # Acceso a datos de reservas
+|   |-- consultas.py       # Interfaz de consultas
+|   `-- modelo_consultas.py # Acceso a datos de consultas
 |-- docs/
-|   `-- modelo-datos.md   # Documentación del modelo de datos
+|   `-- modelo-datos.md    # Documentación del modelo de datos
+|-- requirements.txt
 `-- README.md
 ```
 
@@ -66,38 +94,24 @@ conector MySQL se instala desde `requirements.txt`.
 - Python 3 instalado.
 - MySQL Server 8.0 o superior instalado y en ejecución.
 - Tkinter disponible junto con la instalación de Python.
-- Dependencias de Python instaladas con `python -m pip install -r requirements.txt`.
+- Dependencias instaladas con `python -m pip install -r requirements.txt`.
 
 En Windows, la instalación habitual de Python incluye Tkinter. Cada integrante
 debe instalar MySQL localmente y crear su propia copia de la base usando el
 esquema compartido del repositorio.
 
-## Ejecución de la interfaz
-
-Desde una terminal ubicada en la carpeta del proyecto, ejecutar:
-
-```bash
-cd TKINTER
-python main.py
-```
-
-La ventana principal permite acceder a las secciones **Reservas**,
-**Clientes**, **Canchas** y **Consultas**.
-
 ## Preparar MySQL local
 
-1. Instalar e iniciar MySQL Server 8.0 o superior. MySQL Workbench es opcional,
-	pero permite ejecutar el esquema gráficamente.
-2. Ejecutar `BASE_DE_DATOS/schema_mysql.sql` desde MySQL Workbench (abrir el
-	archivo y ejecutar el script) o, desde CMD o Bash, con el cliente `mysql`
-	desde la raíz del repositorio:
+1. Instalar e iniciar MySQL Server 8.0 o superior. MySQL Workbench es opcional.
+2. Ejecutar `BASE_DE_DATOS/schema_mysql.sql` desde MySQL Workbench o, desde la
+   raíz del repositorio, con el cliente `mysql`:
 
 ```bash
 mysql -u root -p < BASE_DE_DATOS/schema_mysql.sql
 ```
 
-El script crea la base `padelbeche`, sus tablas y registros de ejemplo. Si usan
-un usuario distinto de `root`, debe tener permisos para crear la base.
+El script crea la base `padelbeche`, sus tablas y registros ficticios de
+ejemplo. El usuario de MySQL debe tener permisos para crear la base.
 
 3. Instalar el conector Python desde la raíz del repositorio:
 
@@ -105,8 +119,7 @@ un usuario distinto de `root`, debe tener permisos para crear la base.
 python -m pip install -r requirements.txt
 ```
 
-4. Configurar las variables de conexión en la terminal. En PowerShell, por
-	ejemplo:
+4. Configurar las variables de conexión en la terminal. En PowerShell:
 
 ```powershell
 $env:DB_HOST = "localhost"
@@ -116,8 +129,8 @@ $env:DB_PASSWORD = "tu_contraseña_local"
 $env:DB_NAME = "padelbeche"
 ```
 
-Cada integrante debe usar sus propias credenciales locales. No subir
-contraseñas a GitHub. Estas variables duran mientras siga abierta esa terminal.
+Usa credenciales locales y no subas contraseñas de MySQL al repositorio. Estas
+variables duran mientras siga abierta esa terminal.
 
 5. Comprobar la conexión desde la raíz del repositorio:
 
@@ -125,17 +138,24 @@ contraseñas a GitHub. Estas variables duran mientras siga abierta esa terminal.
 python -c "from BASE_DE_DATOS.database import obtener_conexion; conexion = obtener_conexion(); print('Conexión a MySQL correcta'); conexion.close()"
 ```
 
-La interfaz de Tkinter todavía no consume esta conexión; actualmente conserva
-los datos en listas en memoria.
+## Ejecución
 
-## Próximas etapas
+Desde una terminal ubicada en la carpeta del proyecto, ejecutar:
 
-- Conectar la interfaz gráfica con MySQL.
-- Reemplazar las listas temporales por operaciones de lectura y escritura en
-	la base de datos.
-- Mantener los registros al cerrar y volver a abrir la aplicación.
-- Aplicar desde MySQL las relaciones entre clientes, canchas y reservas.
-- Completar las validaciones de integridad y persistencia.
+```bash
+cd TKINTER
+python main.py
+```
+
+La ventana principal permite acceder a **Reservas**, **Clientes**, **Canchas**
+y **Consultas**.
+
+## Limitaciones conocidas
+
+- El control de superposición de horarios se ejecuta al registrar una reserva,
+  pero todavía debe incorporarse al modificarla.
+- Los roles restringen acciones desde la interfaz; no son permisos de usuario
+  configurados directamente en MySQL.
 
 ## Documentación adicional
 
