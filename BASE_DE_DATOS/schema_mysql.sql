@@ -128,25 +128,6 @@ END//
 
 DELIMITER ;
 
-DELIMITER //
-
--- CREATE TRIGGER validar_eliminacion_cliente
--- BEFORE DELETE ON clientes
--- FOR EACH ROW
--- BEGIN
---     IF EXISTS (
---         SELECT 1
---         FROM reservas
---         WHERE dni_cliente = OLD.dni
---     ) THEN
---         SIGNAL SQLSTATE '45000'
---         SET MESSAGE_TEXT =
---             'No se puede eliminar un cliente que tiene reservas asociadas.';
---     END IF;
--- END//
-
--- DELIMITER ;
-
 -- Carga inicial de datos de prueba: Clientes
 INSERT INTO clientes (dni, nombre_apellido, telefono, email) VALUES
 ('30111222', 'Juan Perez', '3415551111', 'juan@gmail.com'),

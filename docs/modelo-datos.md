@@ -1,100 +1,162 @@
 # Modelo de datos
 
-## Estado del desarrollo
+## Propósito y estado
 
-Este documento describe el esquema MySQL del gestor de reservas PadelBeche,
-definido en `BASE_DE_DATOS/schema_mysql.sql`.
+Este documento describe el modelo relacional MySQL de PadelBeche según el esquema
+de `BASE_DE_DATOS/schema_mysql.sql` y las operaciones de acceso a datos de los
+módulos `TKINTER/modelo_*.py`. La aplicación utiliza MySQL para guardar y
+consultar clientes, canchas y reservas. La conexión se configura en
+`BASE_DE_DATOS/database.py` mediante variables de entorno.
 
-La base de datos se encuentra en una etapa inicial y todavía no está conectada
-con la interfaz gráfica. La aplicación utiliza listas temporales en memoria
-para probar el funcionamiento de las pantallas, los botones y las
-validaciones. La conexión MySQL está disponible en
-`BASE_DE_DATOS/database.py`, pero la interfaz todavía no la utiliza.
+El modelo está formado por tres entidades: `clientes`, `canchas` y
+`reservas`. Los roles de sesión se gestionan desde Python y no se guardan en
+estas tablas.
 
-## Entidades
+## Diagrama relacional
+
+```mermaid
+erDiagram
+    CLIENTES ||--o{ RESERVAS : realiza
+    CANCHAS ||--o{ RESERVAS : recibe
+
+    CLIENTES {
+        INT dni PK
+        VARCHAR nombre_apellido
+        VARCHAR telefono
+        VARCHAR email
+    }
+    CANCHAS {
+        INT id_cancha PK
+        VARCHAR tipo_deporte
+        INT capacidad
+        DECIMAL precio_hora
+        ENUM estado
+    }
+    RESERVAS {
+        INT id_reserva PK
+        INT dni_cliente FK
+        INT id_cancha FK
+        DATE fecha
+        TIME hora_inicio
+        TIME hora_fin
+        ENUM estado_reserva
+        DATETIME creado_en
+        DATETIME vence_pago
+    }
+```
+
+## Entidades y atributos
 
 ### Clientes
 
-Almacena los datos de las personas que realizan reservas.
+Guarda los datos de contacto de las personas que realizan reservas. No existe
+una columna `estado_cliente`; la operación disponible es la eliminación del
+registro.
 
-| Campo | Tipo | Restricciones |
+| Campo | Tipo | Restricciones y descripción |
 |---|---|---|
-| `dni` | `INT` | Clave primaria y obligatorio |
-| `nombre_apellido` | `VARCHAR(100)` | Obligatorio |
-| `telefono` | `VARCHAR(20)` | Obligatorio |
-| `email` | `VARCHAR(100)` | Obligatorio |
+| `dni` | `INT` | Clave primaria y obligatorio. Identifica de forma única al cliente. |
+| `nombre_apellido` | `VARCHAR(100)` | Obligatorio. |
+| `telefono` | `VARCHAR(20)` | Obligatorio. |
+| `email` | `VARCHAR(100)` | Obligatorio. |
 
 ### Canchas
 
-Almacena las canchas disponibles en el complejo deportivo.
+Guarda las características de las instalaciones deportivas.
 
-| Campo | Tipo | Restricciones |
+| Campo | Tipo | Restricciones y descripción |
 |---|---|---|
-| `id_cancha` | `INT` | Clave primaria autoincremental |
-| `tipo_deporte` | `VARCHAR(20)` | Obligatorio |
-| `capacidad` | `INT` | Obligatorio |
-| `precio_hora` | `DECIMAL(10,2)` | Obligatorio |
-| `estado` | `ENUM` | `Activa` o `Inactiva` |
+| `id_cancha` | `INT` | Clave primaria con `AUTO_INCREMENT`. |
+| `tipo_deporte` | `VARCHAR(20)` | Obligatorio; por ejemplo, pádel o fútbol. |
+| `capacidad` | `INT` | Obligatorio; debe ser mayor que cero. |
+| `precio_hora` | `DECIMAL(10,2)` | Obligatorio; debe ser mayor que cero. |
+| `estado` | `ENUM('Activa', 'Inactiva')` | Obligatorio; valor predeterminado `Activa`. |
 
 ### Reservas
 
-Relaciona un cliente con una cancha en una fecha y horario determinados.
+Vincula a un cliente con una cancha para una fecha y franja horaria.
 
-| Campo | Tipo | Restricciones |
+| Campo | Tipo | Restricciones y descripción |
 |---|---|---|
-| `id_reserva` | `INT` | Clave primaria autoincremental |
-| `dni_cliente` | `INT` | Obligatorio y clave foránea |
-| `id_cancha` | `INT` | Obligatorio y clave foránea |
-| `fecha` | `DATE` | Obligatorio |
-| `hora_inicio` | `TIME` | Obligatorio |
-| `hora_fin` | `TIME` | Obligatorio |
-| `estado_reserva` | `ENUM` | `Confirmada`, `Pendiente` o `Cancelada` |
-| `creado_en` | `DATETIME` | Fecha de creación automática |
-| `vence_pago` | `DATETIME` | Obligatorio para reservas pendientes |
+| `id_reserva` | `INT` | Clave primaria con `AUTO_INCREMENT`. |
+| `dni_cliente` | `INT` | Obligatorio; clave foránea a `clientes.dni`. |
+| `id_cancha` | `INT` | Obligatorio; clave foránea a `canchas.id_cancha`. |
+| `fecha` | `DATE` | Obligatorio; fecha del turno. |
+| `hora_inicio` | `TIME` | Obligatorio; hora de comienzo. |
+| `hora_fin` | `TIME` | Obligatorio; debe ser posterior a `hora_inicio`. |
+| `estado_reserva` | `ENUM('Confirmada', 'Pendiente', 'Cancelada')` | Obligatorio. |
+| `creado_en` | `DATETIME` | Obligatorio; valor predeterminado `CURRENT_TIMESTAMP`. |
+| `vence_pago` | `DATETIME` | Puede ser `NULL`; una reserva pendiente debe informar el vencimiento. |
 
-## Relaciones
+## Relaciones e integridad referencial
 
-- Un cliente puede realizar muchas reservas.
-- Una cancha puede tener muchas reservas.
-- Cada reserva pertenece a un único cliente.
-- Cada reserva pertenece a una única cancha.
+- Un cliente puede tener ninguna, una o muchas reservas; cada reserva pertenece
+  a un único cliente.
+- Una cancha puede tener ninguna, una o muchas reservas; cada reserva pertenece
+  a una única cancha.
 - `reservas.dni_cliente` referencia a `clientes.dni`.
 - `reservas.id_cancha` referencia a `canchas.id_cancha`.
+- Las claves foráneas requieren que existan el cliente y la cancha asociados a
+  cada reserva. El esquema no define eliminación en cascada.
 
-## Reglas de negocio previstas
+## Restricciones y validaciones
 
-- El DNI identifica de manera única a cada cliente.
-- La capacidad de una cancha debe ser mayor que cero.
-- El precio por hora debe ser mayor que cero.
-- La hora de inicio debe ser anterior a la hora de fin.
-- Una cancha no debería tener reservas superpuestas en la misma fecha y
-  horario.
-- Las reservas canceladas no bloquean el horario.
-- Una cancha puede estar activa o inactiva.
-- Una reserva puede estar confirmada, pendiente o cancelada.
+### Restricciones de MySQL
 
-Estas reglas ya se prueban parcialmente desde la interfaz mediante
-validaciones en Python. Al conectar la interfaz con MySQL, también deberán contemplarse
-en la capa de persistencia.
+- `chk_canchas_capacidad`: `capacidad > 0`.
+- `chk_canchas_precio`: `precio_hora > 0`.
+- `chk_reservas_horario`: `hora_fin > hora_inicio`.
+- `chk_reservas_vencimiento`: si `estado_reserva` es `Pendiente`,
+  `vence_pago` no puede ser `NULL`.
+- Las claves primarias impiden identificadores duplicados. Las claves foráneas
+  protegen las relaciones entre reservas, clientes y canchas.
 
-## Datos iniciales
+### Triggers del esquema
 
-El archivo `schema_mysql.sql` incluye registros de ejemplo para las tres entidades:
+- `validar_cancha_activa`: antes de insertar una reserva, comprueba que la
+  cancha esté `Activa`.
+- `validar_horario_reserva`: antes de insertar una reserva, rechaza horarios
+  superpuestos para la misma cancha y fecha si la reserva existente está
+  `Confirmada` o `Pendiente`. Una reserva `Cancelada` no bloquea el horario.
 
-- Tres clientes.
-- Cuatro canchas de pádel y fútbol, con estados activos e inactivos.
-- Tres reservas de ejemplo.
+### Validaciones de la aplicación
 
-Estos registros permiten probar la creación de la base de datos antes de
-conectar la interfaz.
+La interfaz valida los datos antes de guardarlos. Entre las reglas observadas
+están el DNI numérico de 7 u 8 dígitos, el nombre, el teléfono y el correo
+electrónico. Para reservas, la aplicación calcula el vencimiento de las
+pendientes y revisa los vencimientos periódicamente.
 
-## Consideraciones para la próxima etapa
+## Roles
 
-La aplicación y el esquema SQL utilizan actualmente estructuras y nombres
-similares, pero independientes. La futura conexión deberá definir una única
-fuente de datos y reemplazar las listas en memoria por consultas SQL para
-crear, consultar, modificar y eliminar registros.
+El rol actual se mantiene en `sesion.py` durante el uso de la aplicación, no en
+las tablas del modelo. La interfaz usa ese rol para mostrar o permitir
+acciones. En clientes, el empleado puede dar de alta; el Supervisor puede
+modificar y eliminar.
 
-También deberá verificarse si `dni` y `telefono` deben mantenerse como
-`INTEGER` o almacenarse como texto, ya que no se utilizan para realizar
-operaciones matemáticas y podrían requerir conservar ceros iniciales.
+## Eliminación de clientes: comportamiento actual
+
+El módulo `TKINTER/modelo_clientes.py` elimina primero las reservas asociadas a
+un cliente y después elimina al cliente, dentro de una transacción. Por eso, al
+eliminar desde esa función también se borra el historial de reservas del
+cliente. 
+
+## Vencimiento de reservas pendientes
+
+La tabla guarda la fecha límite en `vence_pago`. La aplicación establece una
+tolerancia de 15 minutos y comprueba periódicamente las reservas pendientes
+vencidas para actualizar su estado. La restricción `CHECK` solo exige que el
+vencimiento esté informado; no mide el tiempo ni cambia el estado por sí sola.
+
+## Datos de ejemplo
+
+El esquema incluye datos de prueba para clientes, canchas y reservas. Las
+reservas `Pendiente` de la carga inicial incluyen `vence_pago` para cumplir la
+restricción correspondiente.
+
+## Normalización
+
+Los datos se separan según su entidad: los datos personales se guardan una sola
+vez en `clientes`, las características de las instalaciones en `canchas` y
+los datos de cada turno en `reservas`. Las claves primarias identifican cada
+registro y las claves foráneas expresan las relaciones. Esta organización
+reduce la duplicación y sigue el objetivo de la tercera forma normal (3FN).
