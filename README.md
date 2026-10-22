@@ -74,7 +74,6 @@ no se carga automáticamente.
 |   |-- database.py        # Conexión a MySQL
 |   `-- schema_mysql.sql   # Tablas y datos de ejemplo
 |-- TKINTER/
-|   |-- main.py            # Ventana principal y navegación
 |   |-- clientes.py        # Interfaz de clientes
 |   |-- modelo_clientes.py # Acceso a datos de clientes
 |   |-- canchas.py         # Interfaz de canchas
@@ -86,6 +85,8 @@ no se carga automáticamente.
 |-- docs/
 |   `-- modelo-datos.md    # Documentación del modelo de datos
 |-- requirements.txt
+|-- main.py            # Ventana principal y navegación
+|-- sesion.py
 `-- README.md
 ```
 
