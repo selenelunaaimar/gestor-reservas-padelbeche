@@ -1,16 +1,10 @@
-import sys
-import os
-
-"""Agrega la carpeta raiz del proyecto al path de Python para encontrar BASE_DE_DATOS"""
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 import tkinter as tk
 from tkinter import ttk, messagebox
 import re
 import mysql.connector
 import sesion
 
-from modelo_clientes import (
+from .modelo_clientes import (
     obtener_clientes_db,
     insertar_cliente_db,
     actualizar_cliente_db,

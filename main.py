@@ -1,13 +1,13 @@
-from consultas import ventana_consultas 
-from reservas import ventana_reservas
-from canchas import ventana_canchas
-from clientes import ventana_clientes
+from TKINTER.consultas import ventana_consultas 
+from TKINTER.reservas import ventana_reservas
+from TKINTER.canchas import ventana_canchas
+from TKINTER.clientes import ventana_clientes
 import tkinter as tk #importa la biblioteca gráfica Tkinter 
 from datetime import datetime #obtiene la fecha y hora actuales
 from tkinter import messagebox, ttk
 from BASE_DE_DATOS.database import obtener_conexion
 import sesion 
-from modelo_main import obtener_reservas_dia_db
+from TKINTER.modelo_main import obtener_reservas_dia_db
 import threading 
 from BASE_DE_DATOS.backup_database import crear_respaldo
 """VENTANA PRINCIPAL"""

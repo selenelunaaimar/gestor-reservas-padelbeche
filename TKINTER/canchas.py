@@ -2,7 +2,7 @@ import mysql.connector
 import tkinter as tk
 from tkinter import messagebox, ttk
 import sesion
-from modelo_canchas import (
+from .modelo_canchas import (
     obtener_canchas_db,
     insertar_cancha_db,
     actualizar_cancha_db,

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import tkinter as tk
 from tkinter import messagebox, ttk
-from modelo_reservas import (
+from .modelo_reservas import (
     obtener_canchas_activas_db,
     obtener_reservas_db,
     buscar_nombre_cliente_db,
