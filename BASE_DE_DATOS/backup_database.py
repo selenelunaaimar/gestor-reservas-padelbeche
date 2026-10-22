@@ -11,7 +11,7 @@ def crear_respaldo():
     # 1. Datos de conexión
     base = os.getenv("DB_NAME", "padelbeche")
     usuario = os.getenv("DB_USER", "root")
-    password = os.getenv("DB_PASSWORD", "12345")
+    password = os.getenv("DB_PASSWORD", "")
     servidor = os.getenv("DB_HOST", "localhost")
     puerto = os.getenv("DB_PORT", "3306")
 

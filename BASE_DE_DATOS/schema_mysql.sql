@@ -9,7 +9,8 @@ CREATE TABLE clientes (
     dni INT PRIMARY KEY,
     nombre_apellido VARCHAR(100) NOT NULL,
     telefono VARCHAR(20) NOT NULL,
-    email VARCHAR(100) NOT NULL
+    email VARCHAR(100) NOT NULL,
+    fecha_baja DATE NULL DEFAULT NULL
 ) ENGINE = InnoDB;
 
 

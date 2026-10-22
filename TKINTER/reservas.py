@@ -112,8 +112,17 @@ def ventana_reservas(parent=None):
         if not dni:
             entrada_nombre_cliente.insert(0, "Ingrese DNI")
         else:
-            nombre = buscar_nombre_cliente_db(dni)
-            entrada_nombre_cliente.insert(0, nombre if nombre else "No registrado")
+            try:
+                nombre = buscar_nombre_cliente_db(dni)
+                entrada_nombre_cliente.insert(
+                    0,
+                    nombre if nombre else "No registrado o dado de baja"
+                )
+            except (mysql.connector.Error, RuntimeError) as err:
+                messagebox.showerror(
+                    "Error de base de datos",
+                    f"No se pudo validar el cliente: {err}"
+                )
         entrada_nombre_cliente.config(state="readonly")
 
     """Enlaza el campo DNI para que actualice el nombre en tiempo real"""
@@ -275,10 +284,19 @@ def ventana_reservas(parent=None):
             )
             return None
 
-        if buscar_nombre_cliente_db(cliente) is None:
+        try:
+            nombre_cliente = buscar_nombre_cliente_db(cliente)
+        except (mysql.connector.Error, RuntimeError) as err:
+            messagebox.showerror(
+                "Error de base de datos",
+                f"No se pudo validar el cliente: {err}"
+            )
+            return None
+
+        if nombre_cliente is None:
             messagebox.showerror(
                 "Cliente inexistente",
-                "No hay ningún cliente registrado con ese DNI.",
+                "No hay ningún cliente activo con ese DNI.",
             )
             return None
 
