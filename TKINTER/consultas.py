@@ -122,7 +122,7 @@ def ventana_consultas(parent=None):
     tk.Label(panel_der, text="Cliente:").pack(anchor="w")
     entrada_cliente = ttk.Combobox(
         panel_der,
-        state="readonly"
+        state="normal"
     )
     entrada_cliente.pack(fill=tk.X, pady=2)
 

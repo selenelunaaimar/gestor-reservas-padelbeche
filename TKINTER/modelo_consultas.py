@@ -58,8 +58,8 @@ def buscar_reservas_db(desde, hasta, cliente_filtro, cancha_filtro):
                 params.append(hasta)
 
             if cliente_filtro != "Todos" and cliente_filtro != "":
-                query += " AND c.nombre_apellido = %s"
-                params.append(cliente_filtro)
+                query += " AND c.nombre_apellido LIKE %s"
+                params.append(f"%{cliente_filtro}%")
 
             if cancha_filtro != "Todas" and cancha_filtro != "":
                 query += " AND r.id_cancha = %s"
