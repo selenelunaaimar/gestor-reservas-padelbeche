@@ -14,10 +14,10 @@ from modelo_clientes import (
     obtener_clientes_db,
     insertar_cliente_db,
     actualizar_cliente_db,
-    eliminar_cliente_db,
+    dar_de_baja_cliente_db,
+    eliminar_cliente_sin_reservas_db,
     buscar_cliente_db
 )
-
 
 def ventana_clientes(parent=None):
     """Se unificó el manejo de la ventana principal, manteniendo la compatibilidad tanto si se abre independiente como en solapas"""
@@ -45,7 +45,7 @@ def ventana_clientes(parent=None):
     panel_izq.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
     # Tabla que muestra los clientes
-    columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email")
+    columnas = ("DNI", "Nombre y Apellido", "Teléfono", "Email", "Estado")
     tabla = ttk.Treeview(panel_izq, columns=columnas, show="headings")
 
     for col in columnas:
@@ -93,7 +93,8 @@ def ventana_clientes(parent=None):
             registros = obtener_clientes_db()
 
             for cliente in registros:
-                tabla.insert("", tk.END, values=cliente)
+                estado = f"Baja: {cliente[4]}" if cliente[4] else "Activo"
+                tabla.insert("", tk.END, values=(*cliente[:4], estado))
 
         except mysql.connector.Error as err:
             messagebox.showerror(
@@ -308,12 +309,12 @@ def ventana_clientes(parent=None):
                 f"No se pudo modificar: {err}"
             )
 
-    def eliminar():
-        """Elimina un cliente. Solo el Supervisor puede hacerlo."""
+    def dar_de_baja():
+        """Da de baja lógicamente a un cliente. Solo el Supervisor puede hacerlo."""
         if sesion.rol_actual != "Supervisor":
             messagebox.showerror(
                 "Permiso denegado",
-                "Solo Supervisor puede eliminar clientes."
+                "Solo Supervisor puede dar de baja clientes."
             )
             return
 
@@ -327,20 +328,21 @@ def ventana_clientes(parent=None):
             return
 
         if not messagebox.askyesno(
-            "Confirmar eliminación",
-            f"¿Desea eliminar al cliente con DNI {dni}?\n\n"
-            "⚠️ Atención: Se eliminarán también todas las reservas asociadas a este cliente.",
+            "Confirmar baja",
+            f"¿Desea dar de baja al cliente con DNI {dni}?\n\n"
+            "El cliente dejará de estar disponible para nuevas reservas. "
+            "Sus reservas e historial se conservarán.",
             icon="warning"
         ):
             return
 
         try:
-            filas = eliminar_cliente_db(dni)
+            filas = dar_de_baja_cliente_db(dni)
 
             if filas == 0:
                 messagebox.showwarning(
                     "Cliente",
-                    "No se encontró un cliente con ese DNI."
+                    "No se encontró un cliente activo con ese DNI."
                 )
                 return
 
@@ -349,10 +351,63 @@ def ventana_clientes(parent=None):
 
             messagebox.showinfo(
                 "Cliente",
-                "Cliente y sus reservas asociadas fueron eliminados correctamente."
+                "Cliente dado de baja. Sus reservas se conservaron."
             )
 
-        except mysql.connector.Error as err:
+        except (mysql.connector.Error, RuntimeError) as err:
+            messagebox.showerror(
+                "No se pudo dar de baja",
+                f"{err}"
+            )
+
+    def eliminar_definitivamente():
+        """Elimina físicamente al cliente solo si no tiene reservas."""
+        if sesion.rol_actual != "Supervisor":
+            messagebox.showerror(
+                "Permiso denegado",
+                "Solo Supervisor puede eliminar clientes."
+            )
+            return
+
+        dni = entrada_dni.get().strip()
+        if not dni:
+            messagebox.showwarning(
+                "Cliente",
+                "Seleccione un cliente de la tabla primero."
+            )
+            return
+
+        if not messagebox.askyesno(
+            "Confirmar eliminación definitiva",
+            f"¿Eliminar definitivamente al cliente con DNI {dni}?\n\n"
+            "Solo se permite si no tiene reservas. Esta acción no se puede deshacer.",
+            icon="warning"
+        ):
+            return
+
+        try:
+            resultado = eliminar_cliente_sin_reservas_db(dni)
+            if resultado == "tiene_reservas":
+                messagebox.showwarning(
+                    "No se puede eliminar",
+                    "El cliente tiene reservas asociadas. Use «Dar de baja» "
+                    "para conservar su historial."
+                )
+                return
+            if resultado == "no_encontrado":
+                messagebox.showwarning(
+                    "Cliente",
+                    "No se encontró un cliente con ese DNI."
+                )
+                return
+
+            actualizar_tabla()
+            limpiar()
+            messagebox.showinfo(
+                "Cliente",
+                "Cliente eliminado definitivamente."
+            )
+        except (mysql.connector.Error, RuntimeError) as err:
             messagebox.showerror(
                 "No se pudo eliminar",
                 f"{err}"
@@ -381,6 +436,11 @@ def ventana_clientes(parent=None):
 
                 entrada_email.delete(0, tk.END)
                 entrada_email.insert(0, resultado[2])
+                if resultado[3]:
+                    messagebox.showinfo(
+                        "Cliente dado de baja",
+                        f"Este cliente fue dado de baja el {resultado[3]}."
+                    )
 
             else:
                 messagebox.showinfo(
@@ -434,7 +494,14 @@ def ventana_clientes(parent=None):
         tk.Button(
             botones,
             text="Dar de baja",
-            command=eliminar,
+            command=dar_de_baja,
+            width=15
+        ).pack(pady=2)
+
+        tk.Button(
+            botones,
+            text="Eliminar definitivamente",
+            command=eliminar_definitivamente,
             width=15
         ).pack(pady=2)
 

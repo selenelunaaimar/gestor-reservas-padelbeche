@@ -24,6 +24,7 @@ erDiagram
         VARCHAR nombre_apellido
         VARCHAR telefono
         VARCHAR email
+        DATE fecha_baja
     }
     CANCHAS {
         INT id_cancha PK
@@ -49,9 +50,8 @@ erDiagram
 
 ### Clientes
 
-Guarda los datos de contacto de las personas que realizan reservas. No existe
-una columna `estado_cliente`; la operación disponible es la eliminación del
-registro.
+Guarda los datos de contacto de las personas que realizan reservas. La columna
+`fecha_baja` registra una baja lógica; si es `NULL`, el cliente está activo.
 
 | Campo | Tipo | Restricciones y descripción |
 |---|---|---|
@@ -59,6 +59,7 @@ registro.
 | `nombre_apellido` | `VARCHAR(100)` | Obligatorio. |
 | `telefono` | `VARCHAR(20)` | Obligatorio. |
 | `email` | `VARCHAR(100)` | Obligatorio. |
+| `fecha_baja` | `DATE` | Puede ser `NULL`; indica la fecha de baja lógica. |
 
 ### Canchas
 
@@ -97,7 +98,8 @@ Vincula a un cliente con una cancha para una fecha y franja horaria.
 - `reservas.dni_cliente` referencia a `clientes.dni`.
 - `reservas.id_cancha` referencia a `canchas.id_cancha`.
 - Las claves foráneas requieren que existan el cliente y la cancha asociados a
-  cada reserva. El esquema no define eliminación en cascada.
+  cada reserva. El esquema no define eliminación en cascada. Los clientes con
+  reservas no se pueden eliminar físicamente.
 
 ## Restricciones y validaciones
 
@@ -133,12 +135,13 @@ las tablas del modelo. La interfaz usa ese rol para mostrar o permitir
 acciones. En clientes, el empleado puede dar de alta; el Supervisor puede
 modificar y eliminar.
 
-## Eliminación de clientes: comportamiento actual
+## Baja y eliminación de clientes
 
-El módulo `TKINTER/modelo_clientes.py` elimina primero las reservas asociadas a
-un cliente y después elimina al cliente, dentro de una transacción. Por eso, al
-eliminar desde esa función también se borra el historial de reservas del
-cliente. 
+La baja lógica establece `clientes.fecha_baja` y conserva el registro y sus
+reservas. Los clientes dados de baja no se pueden seleccionar para crear
+reservas nuevas, pero siguen disponibles para las consultas históricas. La
+eliminación física es una operación separada y solo se permite si el cliente no
+tiene reservas asociadas.
 
 ## Vencimiento de reservas pendientes
 

@@ -33,19 +33,30 @@ def obtener_reservas_db():
     return lista_reservas
 
 def buscar_nombre_cliente_db(dni):
-    """Busca en la base de datos de clientes y retorna el nombre y apellido directamente"""
+    """Devuelve el nombre del cliente si está activo."""
+    conexion = obtener_conexion()
+    if not conexion:
+        raise RuntimeError("No se pudo conectar a la base de datos.")
+
+    cursor = None
     try:
-        conexion = obtener_conexion()
         cursor = conexion.cursor(dictionary=True)
-        cursor.execute("SELECT nombre_apellido FROM clientes WHERE dni = %s", (dni,))
+        cursor.execute(
+            """
+            SELECT nombre_apellido
+            FROM clientes
+            WHERE dni = %s AND fecha_baja IS NULL
+            """,
+            (dni,),
+        )
         resultado = cursor.fetchone()
-        cursor.close()
-        conexion.close()
         if resultado:
             return resultado["nombre_apellido"]
-    except Exception:
-        pass
-    return None
+        return None
+    finally:
+        if cursor is not None:
+            cursor.close()
+        conexion.close()
 
 def obtener_id_libre_db():
     """Devuelve el menor ID de reserva que no este en uso (reutiliza huecos)."""
