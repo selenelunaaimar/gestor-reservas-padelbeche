@@ -10,6 +10,12 @@ import sesion
 from TKINTER.modelo_main import obtener_reservas_dia_db
 import threading 
 from BASE_DE_DATOS.backup_database import crear_respaldo
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+RUTA_PROYECTO = Path(__file__).resolve().parent
+load_dotenv(RUTA_PROYECTO / ".env")
+
 """VENTANA PRINCIPAL"""
 ventana = tk.Tk()
 ventana.title("PadelBeche")
@@ -24,9 +30,15 @@ NEGRO = "#000000"
 
 """ Credenciales de acceso organizadas por rol - diccionario """
 CREDENCIALES = {
-    "Supervisor": "Admin2026",
-    "Empleado": "1234Hola",
+    "Supervisor": os.getenv("SUPERVISOR_PASSWORD"),
+    "Empleado": os.getenv("EMPLEADO_PASSWORD"),
 }
+
+if not all(CREDENCIALES.values()):
+    raise RuntimeError(
+        "Faltan contraseñas de los perfiles en el archivo .env"
+    )
+
 
 """ Agrego una variable de sesion para guardar el rol, y poder usarla en los demas modulos"""
 rol_actual = None
