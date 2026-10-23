@@ -5,13 +5,18 @@ import subprocess
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from dotenv import load_dotenv
+
+#carga las variables de entorno desde el archivo .env
+RUTA_PROYECTO = Path(__file__).resolve().parent.parent
+load_dotenv(RUTA_PROYECTO / ".env")
 
 #funcion respaldo
 def crear_respaldo():
     # 1. Datos de conexión
     base = os.getenv("DB_NAME", "padelbeche")
-    usuario = os.getenv("DB_USER", "root")
-    password = os.getenv("DB_PASSWORD", "")
+    usuario = os.environ["DB_USER"]
+    password = os.environ["DB_PASSWORD"]
     servidor = os.getenv("DB_HOST", "localhost")
     puerto = os.getenv("DB_PORT", "3306")
 

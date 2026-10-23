@@ -1,12 +1,17 @@
 import os
-import mysql.connector  
+from pathlib import Path
+import mysql.connector 
+from dotenv import load_dotenv
+
+RUTA_PROYECTO = Path(__file__).resolve().parent.parent
+load_dotenv(RUTA_PROYECTO / ".env")
 
 def obtener_conexion():
     return mysql.connector.connect(
         host=os.getenv("DB_HOST", "localhost"),
         port=int(os.getenv("DB_PORT", "3306")),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", ""),
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
         database=os.getenv("DB_NAME", "padelbeche"),
     )
 
