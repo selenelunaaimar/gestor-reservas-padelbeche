@@ -35,6 +35,7 @@ def crear_respaldo():
         programa = (
             r"C:\Program Files\MySQL"
             r"\MySQL Server 8.0\bin\mysqldump.exe"
+            #C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqldump.exe
         )
 
     if not Path(programa).is_file():
