@@ -18,7 +18,8 @@ TO 'rol_padelbeche';
 
 -- Crear usuario de aplicación
 CREATE USER IF NOT EXISTS 'padelbeche_app'@'localhost'
-IDENTIFIED BY 'LA_CONTRASEÑA_NUEVA_DE_MYSQL';
+IDENTIFIED BY 'SoftTech2026';
+
 
 -- Asignar rol al usuario
 GRANT 'rol_padelbeche'
